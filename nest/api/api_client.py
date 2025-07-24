@@ -76,9 +76,9 @@ class RepairDeskClient:
             log_message("ERROR: API key is missing, cannot create ticket detail files")
             return
         
-        # Create cache directory if it doesn't exist
-        from nest.utils.cache_utils import get_cache_directory
-        cache_dir = get_cache_directory()
+        # Create ticket data directory if it doesn't exist
+        from nest.utils.cache_utils import get_ticket_detail_directory
+        cache_dir = get_ticket_detail_directory()
         
         log_message(f"🚀 BATCH PROCESSING: Creating ticket detail files for {len(tickets)} tickets using efficient batch method")
         
@@ -190,9 +190,9 @@ class RepairDeskClient:
                 import json
                 from datetime import datetime
                 
-                # Create cache directory if it doesn't exist
-                from nest.utils.cache_utils import get_cache_directory
-                cache_dir = get_cache_directory()
+                # Create ticket data directory if it doesn't exist
+                from nest.utils.cache_utils import get_ticket_detail_directory
+                cache_dir = get_ticket_detail_directory()
                 
                 # Create filename using only the ticket_id (without timestamp)
                 display_id = ticket_id
