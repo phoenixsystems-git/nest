@@ -1,562 +1,214 @@
-Comprehensive Nest 2.0 Linux Port Guide
-Based on our analysis of the RepairDesk API integration and your Linux port specifications, I've expanded the guide with detailed instructions for a robust Linux port. This comprehensive document covers every aspect of the porting process, from environment setup to testing and troubleshooting.
-Table of Contents
+# Nest - RepairDesk Management System
 
-Environment Setup
-Codebase Modifications
-Hardware Detection Adaptations
-Path Handling
-API Integration
-UI and Theming
-Testing and Validation
-Distribution and Deployment
-Troubleshooting
-Performance Optimization
+![License](https://img.shields.io/badge/license-Private-red.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20WinPE-lightgrey.svg)
 
-## Linux Branch Development Notes
+**Nest** is a comprehensive computer repair shop management system designed as a standalone desktop application with all dependencies bundled. It integrates seamlessly with the RepairDesk API and provides repair shops with a complete solution for managing tickets, customers, inventory, diagnostics, and business operations across Windows, macOS, and WinPE environments.
 
-### Platform Compatibility Layer
-The Nest 2.1 application uses a platform abstraction layer for OS-specific operations:
-- System information collection (`nest/utils/system_info.py`)
-- File system access (`nest/utils/file_manager.py`)
-- Process management (`nest/utils/system/process_manager.py`)
-- Storage diagnostics (`nest/utils/diagnostics/storage_health.py`)
-- Feature detection (`nest/utils/feature_detection.py`)
+## 🚀 Features
 
-### Linux-Specific Requirements
-- Python 3.13 with Tkinter/TTK support
-- External packages: smartmontools, lsblk, dmidecode
-- X11 support for UI rendering (Wayland support partial)
+### Core Functionality
+- **RepairDesk API Integration**: Full integration with RepairDesk for ticket management
+- **Customer Management**: Complete customer database with purchase history
+- **Inventory Control**: Parts tracking and inventory management
+- **Ticket Management**: Create, update, and track repair tickets
+- **Appointment Scheduling**: Google Calendar integration for appointments
 
-### Known Platform Differences
-- UI rendering: Font rendering and widget spacing may differ slightly
-- Performance metrics: CPU/Memory monitoring uses different backends
-- File paths: All paths use pathlib.Path for normalization
+### Advanced Tools
+- **Hardware Diagnostics**: Comprehensive PC, Android, and iOS diagnostic tools
+- **AI Integration**: Claude AI for intelligent ticket analysis and assistance
+- **Reporting System**: Business reports and analytics
+- **Cross-Platform Support**: Native Windows, macOS, and WinPE compatibility
 
-### Testing Cross-Platform Changes
-Each module contains platform-specific tests in its `tests/` directory
+### Security Features
+- **Environment Variables**: Secure API key management
+- **Data Protection**: Local data caching with security best practices
+- **Access Control**: User authentication and role management
+- **Portable Execution**: Self-contained with no external dependencies
 
-### RepairDesk Theme Integration
-- The RepairDesk theme system supports both Windows and Linux
-- Primary color: #017E84 (RepairDesk teal)
-- Font fallbacks are implemented for cross-platform compatibility
+## 📋 System Requirements
 
-1. Environment Setup
-System Requirements
-bash# Ubuntu/Debian
-sudo apt update
-sudo apt install -y python3.13 python3.13-venv python3-tk python3-dev libffi-dev libssl-dev \
-  git build-essential pkg-config libjpeg-dev zlib1g-dev
-  
-# Fedora/RHEL
-sudo dnf install -y python3.13 python3-tkinter python3-devel libffi-devel openssl-devel \
-  git gcc gcc-c++ make libjpeg-devel zlib-devel
+- **Windows**: Windows 10 or later (64-bit)
+- **macOS**: macOS 10.14 (Mojave) or later
+- **WinPE**: Compatible with Windows PE environments for diagnostic scenarios
+- **Storage**: Minimum 100MB free disk space
+- **Memory**: 4GB RAM recommended for optimal performance
 
-# Arch Linux
-sudo pacman -S python tk python-pip gcc git make pkg-config libjpeg-turbo zlib
-Virtual Environment Setup
-bash# Clone repository or extract archive
-git clone https://github.com/repairdesk/nest.git ~/nest_2.0
-# OR
-unzip nest_2.0.zip -d ~/nest_2.0
-cd ~/nest_2.0
+## 🛠️ Installation
 
-# Create and activate virtual environment 
-python3.13 -m venv .venv
-source .venv/bin/activate
+### Windows
+1. **Download** the latest `Nest.exe` from the releases page
+2. **Run** the executable directly - no installation required
+3. **First Launch**: The application will create its configuration and cache directories automatically
+4. **Optional**: Create a desktop shortcut for easy access
 
-# Upgrade pip and install dependencies
-pip install --upgrade pip wheel setuptools
+### macOS
+1. **Download** the latest `Nest.app` from the releases page
+2. **Install**: Drag `Nest.app` to your Applications folder
+3. **First Launch**: Right-click and select "Open" to bypass Gatekeeper security
+4. **Subsequent Launches**: Use Launchpad or Applications folder normally
+
+### WinPE (Portable Environments)
+1. **Copy** `Nest.exe` to any location on your WinPE system or USB drive
+2. **Run** directly from any location - fully portable execution
+3. **Data Storage**: Configuration and cache files are created relative to the executable location
+4. **Network**: Ensure network connectivity for RepairDesk API access
+
+## ⚙️ Configuration
+
+### First-Time Setup
+On first launch, Nest will guide you through the initial configuration:
+1. **RepairDesk API Key**: Enter your RepairDesk API credentials
+2. **Store Information**: Configure your store name and slug
+3. **Optional AI Integration**: Configure Claude, OpenAI, or Gemini API keys for enhanced features
+
+### Advanced Configuration (Optional)
+For advanced users, you can create a `.env` file in the same directory as the executable:
+
+```env
+# RepairDesk API Configuration
+REPAIRDESK_API_KEY=your_repairdesk_api_key_here
+
+# AI API Keys (optional)
+CLAUDE_API_KEY=your_claude_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Store Configuration
+STORE_NAME=Your Store Name
+STORE_SLUG=your_store_slug
+```
+
+### Portable Data Storage
+- **Configuration**: Stored in `config/` directory relative to executable
+- **Cache**: Stored in `cache/` directory relative to executable  
+- **Logs**: Stored in `logs/` directory relative to executable
+- **Automatic Creation**: All directories are created automatically on first run
+
+## 🏗️ Project Structure
+
+```
+nest/
+├── launch_nest.py          # Application entry point
+├── requirements.txt        # Python dependencies
+├── .env.example           # Environment variables template
+├── nest/                  # Main application package
+│   ├── main.py           # Main application logic
+│   ├── api/              # RepairDesk API client
+│   ├── ui/               # Tkinter UI components
+│   ├── utils/            # Utility functions
+│   ├── config/           # Configuration management
+│   └── assets/           # Images and resources
+├── assets/               # Additional assets
+└── docs/                 # Documentation
+```
+
+## 🎯 Usage
+
+### Basic Workflow
+1. **Launch Application**: Double-click `Nest.exe` (Windows) or `Nest.app` (macOS)
+2. **First-Time Setup**: Complete the initial configuration wizard
+3. **Login**: Enter your RepairDesk credentials
+4. **Dashboard**: Access tickets, customers, and inventory
+5. **Create Tickets**: Add new repair tickets with customer information
+6. **Diagnostics**: Run hardware diagnostics on customer devices
+7. **Reports**: Generate business reports and analytics
+
+### Key Features
+- **Ticket Search**: Find tickets by number, customer, or device
+- **Batch Operations**: Process multiple tickets efficiently
+- **Offline Mode**: Work with cached data when internet is unavailable
+- **Export Data**: Export reports and ticket information
+
+## 🔧 Development
+
+### For Contributors Only
+This section is for developers who want to modify the Nest source code. End users should use the standalone executable.
+
+### Setting Up Development Environment
+```bash
+# Clone the repository
+git clone https://github.com/phoenixsystems-git/nest.git
+cd nest
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
 
-# If requirements.txt doesn't exist or contains Windows-specific packages, use:
-pip install tkinter pillow==10.4.0 requests==2.32.3 psutil==5.9.8 beautifulsoup4==4.13.4 \
-  tkcalendar==1.6.1 python-dateutil==2.9.0.post0 cryptography==42.0.5
-Linux Launcher Script
-Create a robust launcher script with error handling and logging:
-bashcat > ~/nest_2.0/run_nest.sh << 'EOF'
-#!/bin/bash
-# Nest Linux Launcher
-set -e
+# Run from source
+python launch_nest.py
+```
 
-# Configuration
-APP_DIR="$(dirname "$(realpath "$0")")"
-VENV_DIR="${APP_DIR}/.venv"
-LOG_FILE="${APP_DIR}/nest_linux.log"
-PYTHON_VERSION="3.13"
+### Building Executables
+```bash
+# Install PyInstaller
+pip install pyinstaller
 
-# Function for logging
-log() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "${LOG_FILE}"
-}
+# Build for current platform
+pyinstaller --onefile --windowed launch_nest.py
 
-# Check Python installation
-if ! command -v python${PYTHON_VERSION} &> /dev/null; then
-  log "ERROR: Python ${PYTHON_VERSION} not found. Please install it first."
-  log "On Ubuntu/Debian: sudo apt install python${PYTHON_VERSION}"
-  log "On Fedora/RHEL: sudo dnf install python${PYTHON_VERSION}"
-  log "On Arch Linux: sudo pacman -S python"
-  exit 1
-fi
+# Output will be in dist/ directory
+```
 
-# Create virtual environment if it doesn't exist
-if [ ! -d "${VENV_DIR}" ]; then
-  log "Creating virtual environment..."
-  python${PYTHON_VERSION} -m venv "${VENV_DIR}"
-  source "${VENV_DIR}/bin/activate"
-  pip install --upgrade pip wheel setuptools
-  
-  # Install dependencies
-  if [ -f "${APP_DIR}/requirements.txt" ]; then
-    log "Installing dependencies from requirements.txt..."
-    pip install -r "${APP_DIR}/requirements.txt"
-  else
-    log "requirements.txt not found, installing core dependencies..."
-    pip install tkinter pillow==10.4.0 requests==2.32.3 psutil==5.9.8 \
-      beautifulsoup4==4.13.4 tkcalendar==1.6.1 python-dateutil==2.9.0.post0 \
-      cryptography==42.0.5
-  fi
-else
-  source "${VENV_DIR}/bin/activate"
-fi
+### Contributing Guidelines
+1. Create feature branches from `main`
+2. Follow PEP 8 coding standards
+3. Add tests for new functionality
+4. Update documentation as needed
+5. Submit pull requests for review
 
-# Change to app directory
-cd "${APP_DIR}"
+## 📚 Documentation
 
-# Set Python path for module imports
-export PYTHONPATH="${APP_DIR}"
+- **User Guide**: Complete usage instructions included with the application
+- **API Documentation**: Check `docs/api.md` in the source repository
+- **Troubleshooting**: See troubleshooting section below
+- **Developer Documentation**: Available in the source repository for contributors
 
-# Run Nest
-log "Starting Nest application..."
-python -m nest.main
-exit_code=$?
+## 🐛 Troubleshooting
 
-if [ $exit_code -ne 0 ]; then
-  log "ERROR: Nest exited with code ${exit_code}"
-  echo "Nest encountered an error. Check ${LOG_FILE} for details."
-  exit $exit_code
-fi
-EOF
+### Common Issues
 
-chmod +x ~/nest_2.0/run_nest.sh
-Desktop Integration
-Create a desktop entry for system integration:
-bashcat > ~/.local/share/applications/nest.desktop << EOF
-[Desktop Entry]
-Name=RepairDesk Nest
-Comment=RepairDesk repair shop management system
-Exec=$(realpath ~/nest_2.0/run_nest.sh)
-Icon=$(realpath ~/nest_2.0/assets/images/icon.png)
-Terminal=false
-Type=Application
-Categories=Utility;Office;
-StartupWMClass=nest
-EOF
-2. Codebase Modifications
-Module Import Structure
-First, fix any absolute imports to ensure Linux compatibility:
-python# Before:
-from nest.utils.config_util import load_config
+#### Windows
+- **Antivirus Blocking**: Some antivirus software may flag the executable. Add Nest.exe to your antivirus exclusions
+- **Windows Defender SmartScreen**: Click "More info" then "Run anyway" on first launch
+- **Permission Errors**: Run as administrator if you encounter file permission issues
 
-# After:
-try:
-    from nest.utils.config_util import load_config
-except ImportError:
-    # Fallback for direct script execution
-    import os
-    import sys
-    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    sys.path.insert(0, parent_dir)
-    from nest.utils.config_util import load_config
-Fixing repairdesk_api.py for Ticket Lookups
-Based on our earlier analysis, update the ticket lookup function to properly use the cache:
-pythondef get_numeric_ticket_id(self, ticket_number):
-    """
-    Get the numeric RepairDesk ticket ID from a ticket number (e.g., T-12345).
-    
-    Args:
-        ticket_number (str): The ticket number, with or without "T-" prefix
-        
-    Returns:
-        str: The internal RepairDesk ticket ID, or None if not found
-    """
-    # Normalize ticket number format
-    if ticket_number.startswith("T-"):
-        display_number = ticket_number
-        numeric_part = ticket_number[2:]
-    else:
-        display_number = f"T-{ticket_number}"
-        numeric_part = ticket_number
-        
-    logging.info(f"Looking up numeric ID for ticket {display_number}")
-    
-    # STEP 1: Check ticket cache first
-    try:
-        cache_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
-            'ticket_cache.json'
-        )
-        
-        if os.path.exists(cache_path):
-            with open(cache_path, 'r') as f:
-                tickets = json.load(f)
-                
-            for ticket in tickets:
-                if ticket.get('summary', {}).get('order_id') == display_number:
-                    internal_id = ticket.get('summary', {}).get('id')
-                    logging.info(f"Found ticket {display_number} in cache with internal ID: {internal_id}")
-                    return internal_id
-                    
-            logging.info(f"Ticket {display_number} not found in cache")
-    except Exception as e:
-        logging.error(f"Error checking ticket cache: {e}")
-    
-    # STEP 2: Try direct API lookup using numeric part
-    try:
-        url = f"{self.base_url}/web/v1/tickets/{numeric_part}?api_key={self.api_key}"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            if isinstance(data, dict) and data.get('success') and data.get('data'):
-                ticket_id = data['data'].get('id')
-                logging.info(f"Direct API lookup successful. Ticket ID: {ticket_id}")
-                return ticket_id
-        
-        logging.info(f"Direct lookup failed for {display_number}, trying all tickets search")
-    except Exception as e:
-        logging.error(f"Error in direct ticket lookup: {e}")
-    
-    # STEP 3: Fetch all tickets and search
-    try:
-        all_tickets = self.get_all_tickets()
-        if all_tickets:
-            for ticket in all_tickets:
-                if ticket.get('summary', {}).get('order_id') == display_number:
-                    internal_id = ticket.get('summary', {}).get('id')
-                    logging.info(f"Found ticket {display_number} in API results with internal ID: {internal_id}")
-                    return internal_id
-    except Exception as e:
-        logging.error(f"Error searching all tickets: {e}")
-    
-    logging.error(f"Could not find numeric ID for ticket {display_number}")
-    return None
-Ticket Cache Management
-Improve the ticket cache management to work on Linux:
-pythondef _update_ticket_cache(self, tickets):
-    """Update the local ticket cache file with the latest tickets."""
-    try:
-        # Use platform-independent path
-        cache_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
-            'ticket_cache.json'
-        )
-        
-        # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
-        
-        # Safely write to temp file first, then rename
-        temp_path = f"{cache_path}.tmp"
-        with open(temp_path, 'w') as f:
-            json.dump(tickets, f, indent=2)
-            
-        # Atomic rename operation
-        os.replace(temp_path, cache_path)
-        
-        logging.info(f"Updated ticket cache with {len(tickets)} tickets")
-        return True
-    except Exception as e:
-        logging.error(f"Failed to update ticket cache: {e}")
-        return False
-3. Hardware Detection Adaptations
-CPU Information
-pythondef get_cpu_info():
-    """Get CPU information in a platform-independent way."""
-    if platform.system() == "Windows":
-        try:
-            import wmi
-            c = wmi.WMI()
-            for processor in c.Win32_Processor():
-                return {
-                    "name": processor.Name.strip(),
-                    "cores": processor.NumberOfCores,
-                    "threads": processor.NumberOfLogicalProcessors,
-                    "manufacturer": processor.Manufacturer,
-                }
-        except Exception as e:
-            logging.error(f"Error getting Windows CPU info via WMI: {e}")
-    
-    # Linux implementation
-    try:
-        cpu_info = {}
-        with open('/proc/cpuinfo', 'r') as f:
-            content = f.read()
-            
-        # Parse CPU model name
-        model_pattern = re.compile(r'model name\s+:\s+(.*)')
-        model_match = model_pattern.search(content)
-        if model_match:
-            cpu_info["name"] = model_match.group(1).strip()
-        
-        # Parse CPU cores
-        cpu_cores = len(re.findall(r'processor\s+:\s+\d+', content))
-        cpu_info["threads"] = cpu_cores
-        
-        # Physical cores 
-        physical_id_pattern = re.compile(r'physical id\s+:\s+(\d+)')
-        core_id_pattern = re.compile(r'core id\s+:\s+(\d+)')
-        
-        physical_ids = set()
-        core_ids = {}
-        
-        for line in content.splitlines():
-            physical_match = physical_id_pattern.match(line)
-            if physical_match:
-                physical_ids.add(physical_match.group(1))
-                
-            core_match = core_id_pattern.match(line)
-            if core_match and physical_match:
-                if physical_match.group(1) not in core_ids:
-                    core_ids[physical_match.group(1)] = set()
-                core_ids[physical_match.group(1)].add(core_match.group(1))
-        
-        # Calculate physical cores
-        physical_cores = sum(len(cores) for cores in core_ids.values()) if core_ids else 1
-        cpu_info["cores"] = physical_cores if physical_cores > 0 else cpu_cores
-        
-        # Get manufacturer
-        vendor_pattern = re.compile(r'vendor_id\s+:\s+(.*)')
-        vendor_match = vendor_pattern.search(content)
-        if vendor_match:
-            cpu_info["manufacturer"] = vendor_match.group(1).strip()
-            
-        return cpu_info
-    except Exception as e:
-        logging.error(f"Error getting Linux CPU info: {e}")
-    
-    # Fallback using platform module
-    return {
-        "name": platform.processor() or "Unknown CPU",
-        "cores": psutil.cpu_count(logical=False) or 1,
-        "threads": psutil.cpu_count(logical=True) or 1,
-        "manufacturer": "Unknown",
-    }
-Memory Information
-pythondef get_memory_info():
-    """Get memory information in a platform-independent way."""
-    if platform.system() == "Windows":
-        try:
-            import wmi
-            c = wmi.WMI()
-            total_memory = 0
-            for mem_module in c.Win32_PhysicalMemory():
-                total_memory += int(mem_module.Capacity)
-            
-            memory_info = {
-                "total": total_memory,
-                "total_gb": round(total_memory / (1024**3), 2),
-            }
-            
-            # Add information from psutil
-            vm = psutil.virtual_memory()
-            memory_info.update({
-                "available": vm.available,
-                "available_gb": round(vm.available / (1024**3), 2),
-                "used": vm.used,
-                "used_gb": round(vm.used / (1024**3), 2),
-                "percent": vm.percent,
-            })
-            
-            return memory_info
-        except Exception as e:
-            logging.error(f"Error getting Windows memory info via WMI: {e}")
-    
-    # Linux implementation
-    try:
-        # Get memory info from /proc/meminfo
-        with open('/proc/meminfo', 'r') as f:
-            meminfo = f.read()
-        
-        # Extract total memory
-        total_pattern = re.compile(r'MemTotal:\s+(\d+)\s+kB')
-        total_match = total_pattern.search(meminfo)
-        
-        total_memory = 0
-        if total_match:
-            total_kb = int(total_match.group(1))
-            total_memory = total_kb * 1024  # Convert KB to bytes
-        
-        memory_info = {
-            "total": total_memory,
-            "total_gb": round(total_memory / (1024**3), 2),
-        }
-        
-        # Add information from psutil
-        vm = psutil.virtual_memory()
-        memory_info.update({
-            "available": vm.available,
-            "available_gb": round(vm.available / (1024**3), 2),
-            "used": vm.used,
-            "used_gb": round(vm.used / (1024**3), 2),
-            "percent": vm.percent,
-        })
-        
-        return memory_info
-    except Exception as e:
-        logging.error(f"Error getting Linux memory info: {e}")
-    
-    # Fallback to psutil only
-    try:
-        vm = psutil.virtual_memory()
-        return {
-            "total": vm.total,
-            "total_gb": round(vm.total / (1024**3), 2),
-            "available": vm.available,
-            "available_gb": round(vm.available / (1024**3), 2),
-            "used": vm.used,
-            "used_gb": round(vm.used / (1024**3), 2),
-            "percent": vm.percent,
-        }
-    except Exception as e:
-        logging.error(f"Error getting memory info via psutil: {e}")
-        return {
-            "total": 0,
-            "total_gb": 0,
-            "available": 0,
-            "available_gb": 0,
-            "used": 0,
-            "used_gb": 0,
-            "percent": 0,
-        }
-Disk Information
-pythondef get_disk_info():
-    """Get disk information in a platform-independent way."""
-    if platform.system() == "Windows":
-        try:
-            import wmi
-            c = wmi.WMI()
-            disks = []
-            
-            # Physical disks
-            for disk in c.Win32_DiskDrive():
-                disk_info = {
-                    "model": disk.Model.strip(),
-                    "size": int(disk.Size),
-                    "size_gb": round(int(disk.Size) / (1024**3), 2),
-                    "interface": disk.InterfaceType,
-                }
-                disks.append(disk_info)
-            
-            # Add partition information
-            partitions = []
-            for partition in psutil.disk_partitions():
-                try:
-                    usage = psutil.disk_usage(partition.mountpoint)
-                    partition_info = {
-                        "device": partition.device,
-                        "mountpoint": partition.mountpoint,
-                        "filesystem": partition.fstype,
-                        "total": usage.total,
-                        "total_gb": round(usage.total / (1024**3), 2),
-                        "used": usage.used,
-                        "used_gb": round(usage.used / (1024**3), 2),
-                        "free": usage.free,
-                        "free_gb": round(usage.free / (1024**3), 2),
-                        "percent": usage.percent,
-                    }
-                    partitions.append(partition_info)
-                except PermissionError:
-                    # Skip partitions that can't be accessed
-                    continue
-            
-            return {
-                "disks": disks,
-                "partitions": partitions,
-            }
-        except Exception as e:
-            logging.error(f"Error getting Windows disk info via WMI: {e}")
-    
-    # Linux implementation
-    try:
-        disks = []
-        
-        # Get physical disk information from /proc/partitions
-        with open('/proc/partitions', 'r') as f:
-            # Skip header
-            next(f)
-            next(f)
-            
-            for line in f:
-                parts = line.strip().split()
-                if len(parts) == 4 and not parts[3][0].isdigit():  # Exclude partitions
-                    # Check if it's a real disk (not a partition)
-                    if not re.match(r'.*\d+$', parts[3]):
-                        disk_path = f"/dev/{parts[3]}"
-                        
-                        # Try to get model info from /sys
-                        model = "Unknown"
-                        try:
-                            model_path = f"/sys/block/{parts[3]}/device/model"
-                            if os.path.exists(model_path):
-                                with open(model_path, 'r') as model_file:
-                                    model = model_file.read().strip()
-                        except:
-                            pass
-                        
-                        # Calculate size
-                        size = int(parts[2]) * 1024  # blocks * 1024 = bytes
-                        
-                        disk_info = {
-                            "model": model,
-                            "size": size,
-                            "size_gb": round(size / (1024**3), 2),
-                            "interface": "Unknown",  # Could be determined with additional parsing
-                        }
-                        disks.append(disk_info)
-        
-        # Add partition information
-        partitions = []
-        for partition in psutil.disk_partitions():
-            try:
-                usage = psutil.disk_usage(partition.mountpoint)
-                partition_info = {
-                    "device": partition.device,
-                    "mountpoint": partition.mountpoint,
-                    "filesystem": partition.fstype,
-                    "total": usage.total,
-                    "total_gb": round(usage.total / (1024**3), 2),
-                    "used": usage.used,
-                    "used_gb": round(usage.used / (1024**3), 2),
-                    "free": usage.free,
-                    "free_gb": round(usage.free / (1024**3), 2),
-                    "percent": usage.percent,
-                }
-                partitions.append(partition_info)
-            except PermissionError:
-                # Skip partitions that can't be accessed
-                continue
-        
-        return {
-            "disks": disks,
-            "partitions": partitions,
-        }
-    except Exception as e:
-        logging.error(f"Error getting Linux disk info: {e}")
-    
-    # Fallback to psutil only
-    try:
-        partitions = []
-        for partition in psutil.disk_partitions():
-            try:
-                usage = psutil.disk_usage(partition.mountpoint)
-                partition_info = {
-                    "device": partition.device,
-                    "mountpoint": partition.mountpoint,
-                    "filesystem": partition.fstype,
-                    "total": usage.total,
-                    "total_gb": round(usage.total / (1024**3), 2),
-                    "used": usage.used,
-                    "used_gb": round(usage.used / (1024**3), 2),
-                    "free": usage.free,
+#### macOS
+- **Gatekeeper Warning**: Right-click the app and select "Open" to bypass security warnings
+- **"App is damaged"**: If you see this error, run `xattr -cr /Applications/Nest.app` in Terminal
+- **Permission Denied**: Ensure the app has necessary permissions in System Preferences > Security & Privacy
+
+#### General
+- **API Connection**: Verify RepairDesk API key and internet connection
+- **Configuration Issues**: Delete the `config/` directory to reset to defaults
+- **Performance Issues**: Ensure adequate system resources (4GB+ RAM recommended)
+- **Network Connectivity**: Verify firewall settings allow outbound HTTPS connections
+
+### Getting Help
+1. Check log files in the `logs/` directory next to the executable
+2. Verify API key configuration in the settings
+3. Test network connectivity to RepairDesk servers
+4. Try running from a different location if using portable mode
+
+## 📄 License
+
+This project is private and proprietary. All rights reserved.
+
+## 🤝 Support
+
+For support and questions:
+- Check the documentation in the `docs/` folder
+- Review the troubleshooting guide
+- Contact the development team
+
+---
+
+**Nest** - Streamlining repair shop operations with powerful RepairDesk integration.
+
+*Available as a standalone application for Windows, macOS, and WinPE environments - no installation or dependencies required.*
                     "free_gb": round(usage.free / (1024**3), 2),
                     "percent": usage.percent,
                 }
@@ -2212,4 +1864,3 @@ def optimize_for_linux():
             style.theme_use("clam")
 This comprehensive guide should give you everything you need for a successful Linux port of Nest 2.0, with special attention to the RepairDesk API integration that we fixed. The guide covers all aspects from environment setup to distribution, with detailed code examples for each section.
 By following these instructions, your Linux port will maintain all the functionality of the Windows version while properly handling platform-specific differences. The RepairDesk API integration will work correctly, including the ticket lookup and comment posting that you highlighted as critical features.
-
