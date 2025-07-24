@@ -95,19 +95,6 @@ class LoginFrame(ttk.Frame):
         pin = "".join(filter(str.isdigit, self.pin_var.get()))[:4]
         if pin != self.pin_var.get():
             self.pin_var.set(pin)
-            
-    def check_api_key_validity(self, api_key):
-        """Validate the API key format before attempting connection."""
-        # Basic validation of API key format (typically hexadecimal string)
-        if not api_key or len(api_key) < 20:  # Most API keys are longer than 20 chars
-            return False
-        
-        # Check if API key has valid characters (alphanumeric)
-        import re
-        if not re.match(r'^[a-zA-Z0-9_\-]+$', api_key):
-            return False
-            
-        return True
 
     # Note: remember_credentials method removed as we now always save credentials in connect_to_store
 
