@@ -76,9 +76,8 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
         return get_fallback_response(user_message)
     
     try:
-        
         # Initialize variables
-    ticket_data = None
+        ticket_data = None
     oldest_ticket_id = None
     newest_ticket_id = None
     processed_tickets = []
@@ -202,9 +201,6 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
         error_msg = f"Unexpected error in get_ai_response: {str(e)}"
         logging.exception(error_msg)
         return get_fallback_response(user_message)
-            
-            # Look for model in config if available
-            if 'ai_models' in config:
                 for model in config['ai_models']:
                     if model.get('name') == selected_model_name:
                         use_api = model.get('api', 'claude')
