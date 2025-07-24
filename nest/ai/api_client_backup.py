@@ -309,16 +309,16 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
                             specific_ticket_id = f"T-{specific_ticket_number}"
                             
                         # Try to load the raw specific ticket data file directly
-                        # Try a few different potential cache paths
+                        from nest.utils.cache_utils import get_cache_directory
+                        cache_dir = get_cache_directory()
+                        
                         potential_paths = [
-                            os.path.join(os.path.dirname(__file__), '..', 'cache', f"ticket_detail_{specific_ticket_id}.json"),  # Relative path
-                            os.path.join('/home/outbackelectronics/Nest_2.4/cache', f"ticket_detail_{specific_ticket_id}.json"),  # Absolute path
+                            os.path.join(cache_dir, f"ticket_detail_{specific_ticket_id}.json"),
                         ]
                         
                         # Try adding T- prefix if missing
                         if not specific_ticket_id.startswith('T-'):
-                            potential_paths.append(os.path.join(os.path.dirname(__file__), '..', 'cache', f"ticket_detail_T-{specific_ticket_id}.json"))
-                            potential_paths.append(os.path.join('/home/outbackelectronics/Nest_2.4/cache', f"ticket_detail_T-{specific_ticket_id}.json"))
+                            potential_paths.append(os.path.join(cache_dir, f"ticket_detail_T-{specific_ticket_id}.json"))
                         
                         # Log all the paths we're checking
                         logging.info(f"Looking for ticket detail file in these locations: {potential_paths}")
@@ -815,10 +815,11 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
                                 specific_id = f"T-{specific_id[1:]}"
                                 
                             # Try multiple locations with both T- prefix and without
+                            from nest.utils.cache_utils import get_cache_directory
+                            cache_dir = get_cache_directory()
+                            
                             paths = [
-                                f"/home/outbackelectronics/Nest_2.4/cache/ticket_detail_{specific_id}.json",
-                                os.path.join(os.path.dirname(os.path.dirname(__file__)), 'cache', f"ticket_detail_{specific_id}.json"),
-                                os.path.join(os.path.dirname(__file__), '..', 'cache', f"ticket_detail_{specific_id}.json")
+                                os.path.join(cache_dir, f"ticket_detail_{specific_id}.json"),
                             ]
                             
                             logging.info(f"DEBUGGING: Looking for ticket file for ID {specific_id}")
@@ -1157,17 +1158,18 @@ def _call_claude_api(user_message: str, model_name: str, config: Dict,
             raw_specific_ticket_data = None
             
             # Try to load the specific ticket detail file directly
+            from nest.utils.cache_utils import get_cache_directory
+            cache_dir = get_cache_directory()
+            
             potential_paths = [
-                os.path.join(os.path.dirname(os.path.dirname(__file__)), 'cache', f"ticket_detail_{specific_ticket}.json"),
-                os.path.join('/home/outbackelectronics/Nest_2.4/cache', f"ticket_detail_{specific_ticket}.json")
+                os.path.join(cache_dir, f"ticket_detail_{specific_ticket}.json"),
             ]
             
             # Also look for variations without the T- prefix
             if specific_ticket.startswith('T-'):
                 numeric_id = specific_ticket[2:]
                 potential_paths.extend([
-                    os.path.join(os.path.dirname(os.path.dirname(__file__)), 'cache', f"ticket_detail_{numeric_id}.json"),
-                    os.path.join('/home/outbackelectronics/Nest_2.4/cache', f"ticket_detail_{numeric_id}.json")
+                    os.path.join(cache_dir, f"ticket_detail_{numeric_id}.json"),
                 ])
             
             # Try each path
