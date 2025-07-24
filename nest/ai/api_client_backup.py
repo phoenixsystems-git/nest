@@ -200,9 +200,6 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
         error_msg = f"Unexpected error in get_ai_response: {str(e)}"
         logging.exception(error_msg)
         return get_fallback_response(user_message)
-        
-        try:
-            if use_api == "claude":
                 # Claude API
                 api_key = config.get("claude", {}).get("api_key")
                 if not api_key:
