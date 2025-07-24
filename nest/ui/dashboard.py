@@ -33,7 +33,9 @@ from nest.utils.cache_utils import get_ticket_cache_path
 
 # Use the central cache utility to get the ticket cache path
 CACHE_FILE_PATH = get_ticket_cache_path()
-LAST_LOGIN_FILE_PATH = os.path.join(os.path.dirname(__file__), "..", "last_login.json")
+from nest.utils.platform_paths import PlatformPaths
+_platform_paths = PlatformPaths()
+LAST_LOGIN_FILE_PATH = str(_platform_paths.ensure_dir_exists(_platform_paths.get_user_data_dir()) / "last_login.json")
 
 def log_message(message):
     """Log a message to the console and to the log file."""

@@ -527,7 +527,8 @@ Expires after {self.cache_expiration} minutes"""
                 
                 # Use the main inventory cache file which has complete data
                 try:
-                    inventory_cache_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cache", "inventory_cache.json")
+                    from nest.utils.cache_utils import get_cache_directory
+                    inventory_cache_path = os.path.join(get_cache_directory(), "inventory_cache.json")
                     
                     if os.path.exists(inventory_cache_path):
                         logging.info(f"Loading inventory data from main cache: {inventory_cache_path}")
@@ -655,9 +656,8 @@ Expires after {self.cache_expiration} minutes"""
     
     def get_cached_data(self, report_type, start_date, end_date):
         """Get cached report data from JSON file."""
-        cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cache")
-        if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
+        from nest.utils.cache_utils import get_cache_directory
+        cache_dir = get_cache_directory()
             
         # Generate cache filename based on report type and date range
         start_str = start_date.strftime('%Y%m%d')
@@ -696,9 +696,8 @@ Expires after {self.cache_expiration} minutes"""
         if not data:
             return False
             
-        cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cache")
-        if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
+        from nest.utils.cache_utils import get_cache_directory
+        cache_dir = get_cache_directory()
             
         # Generate cache filename based on report type and date range
         start_str = start_date.strftime('%Y%m%d')

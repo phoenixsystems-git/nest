@@ -28,26 +28,25 @@ class ConfigManager:
             self.logger.warning(f"Could not initialize encryption: {str(e)}")
     
     def find_config_path(self) -> str:
-        """Find the configuration file path.
+        """Find the configuration file path using platform-appropriate location.
         
         Returns:
             Path to the configuration file
         """
-        # Try common locations
-        app_dir = os.path.dirname(os.path.dirname(__file__))
-        possible_paths = [
-            os.path.join(app_dir, "config", "config.json"),
-            os.path.join(app_dir, "config.json")
-        ]
-        
-        for path in possible_paths:
-            if os.path.exists(path):
-                return path
-                
-        # If not found, use default location
-        config_dir = os.path.join(app_dir, "config")
-        os.makedirs(config_dir, exist_ok=True)
-        return os.path.join(config_dir, "config.json")
+        try:
+            from .platform_paths import PlatformPaths
+            platform_paths = PlatformPaths()
+            config_dir = platform_paths.get_config_dir()
+            config_path = config_dir / 'config.json'
+            if config_path.exists():
+                return str(config_path)
+            platform_paths.ensure_dir_exists(config_dir)
+            return str(config_path)
+        except ImportError:
+            app_dir = os.path.dirname(os.path.dirname(__file__))
+            config_dir = os.path.join(app_dir, "config")
+            os.makedirs(config_dir, exist_ok=True)
+            return os.path.join(config_dir, "config.json")
     
     def _init_encryption(self) -> None:
         """Initialize Fernet encryption for secure storage."""

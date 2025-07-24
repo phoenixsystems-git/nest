@@ -65,6 +65,8 @@ class RepairDeskAPI:
             config_path = config_dir / 'config.json'
             if config_path.exists():
                 return str(config_path)
+            platform_paths.ensure_dir_exists(config_dir)
+            return str(config_path)
         except ImportError:
             pass
         

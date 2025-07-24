@@ -858,11 +858,21 @@ class LoginFrame(ttk.Frame):
             import os
             from pathlib import Path
             
-            logo_paths = [
-                os.path.join(os.path.dirname(os.path.dirname(__file__)), "theme", "assets", "png_logo.png"),
-                os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "images", "logo.png"),
-                os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "logo.png")
-            ]
+            try:
+                from nest.utils.platform_paths import PlatformPaths
+                platform_paths = PlatformPaths()
+                base_dir = platform_paths._get_portable_dir()
+                logo_paths = [
+                    os.path.join(str(base_dir), "theme", "assets", "png_logo.png"),
+                    os.path.join(str(base_dir), "assets", "images", "logo.png"),
+                    os.path.join(str(base_dir), "assets", "logo.png")
+                ]
+            except ImportError:
+                logo_paths = [
+                    os.path.join(os.path.dirname(os.path.dirname(__file__)), "theme", "assets", "png_logo.png"),
+                    os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "images", "logo.png"),
+                    os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "logo.png")
+                ]
             
             logo_path = None
             for path in logo_paths:
@@ -2107,11 +2117,21 @@ class LoginFrame(ttk.Frame):
         """
         try:
             # Define possible locations for the SVG file
-            base_dirs = [
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),  # project root
-                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'theme'),  # theme directory
-                os.path.dirname(__file__)  # current directory
-            ]
+            try:
+                from nest.utils.platform_paths import PlatformPaths
+                platform_paths = PlatformPaths()
+                project_root = platform_paths._get_portable_dir()
+                base_dirs = [
+                    str(project_root),  # project root
+                    os.path.join(str(project_root), 'theme'),  # theme directory
+                    os.path.dirname(__file__)  # current directory
+                ]
+            except ImportError:
+                base_dirs = [
+                    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),  # project root
+                    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'theme'),  # theme directory
+                    os.path.dirname(__file__)  # current directory
+                ]
             
             possible_paths = []
             for base_dir in base_dirs:

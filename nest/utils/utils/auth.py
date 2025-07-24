@@ -5,11 +5,10 @@ from utils.config_util import load_config
 import logging
 
 
-# Load configuration
+# Load configuration using centralized system
 def load_config():
-    config_path = os.path.join(os.path.dirname(__file__), "config", "config.json")
-    with open(config_path, "r") as config_file:
-        return json.load(config_file)
+    from nest.utils.config import load_config as main_load_config
+    return main_load_config()
 
 
 CONFIG = load_config()

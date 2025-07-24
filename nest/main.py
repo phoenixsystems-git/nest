@@ -1156,9 +1156,12 @@ Your session was locked due to inactivity""",
         import json
         import os
         import datetime
-        config_path = os.path.join(os.path.dirname(__file__), 'config', 'config.json')
+        from nest.utils.platform_paths import PlatformPaths
+        platform_paths = PlatformPaths()
+        config_dir = platform_paths.ensure_dir_exists(platform_paths.get_config_dir())
+        config_path = config_dir / 'config.json'
         try:
-            with open(config_path, 'r') as file:
+            with open(str(config_path), 'r') as file:
                 config = json.load(file)
                 
             # Update current user info
@@ -1170,7 +1173,7 @@ Your session was locked due to inactivity""",
             }
             
             # Save updated config
-            with open(config_path, 'w') as file:
+            with open(str(config_path), 'w') as file:
                 json.dump(config, file, indent=2)
                 
             # Generate personalized knowledge file for NestBot
