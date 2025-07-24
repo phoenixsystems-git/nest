@@ -17,8 +17,13 @@ def get_font_path():
         if os.path.exists(abs_path):
             return abs_path
         
-        # Fall back to relative path resolution
-        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        # Fall back to using platform-appropriate directory handling
+        try:
+            from .platform_paths import PlatformPaths
+            platform_paths = PlatformPaths()
+            base_path = str(platform_paths._get_portable_dir())
+        except ImportError:
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     
     return os.path.join(base_path, "assets", "fonts", "Inter")
 

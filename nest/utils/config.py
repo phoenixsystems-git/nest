@@ -2,26 +2,29 @@ import os
 import json
 import logging
 from typing import Dict, Any, Optional
+from .platform_paths import PlatformPaths
 
 
 def get_script_dir() -> str:
     """Get the directory containing the main script."""
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    platform_paths = PlatformPaths()
+    return str(platform_paths._get_portable_dir())
 
 
 def load_config() -> Dict[str, Any]:
     """Load configuration from config files with fallback support."""
-    script_dir = get_script_dir()
+    platform_paths = PlatformPaths()
+    config_dir = platform_paths.ensure_dir_exists(platform_paths.get_config_dir())
     config_paths = [
-        os.path.join(script_dir, "config.json"),
-        os.path.join(script_dir, "config", "config.json"),
+        config_dir / "config.json",
+        os.path.join(get_script_dir(), "config.json"),  # fallback for development
     ]
 
     config = {}
     for config_path in config_paths:
-        if os.path.exists(config_path):
+        if os.path.exists(str(config_path)):
             try:
-                with open(config_path, "r") as f:
+                with open(str(config_path), "r") as f:
                     config = json.load(f)
                 logging.info(f"Loaded config from {config_path}")
                 break

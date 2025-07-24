@@ -11,7 +11,13 @@ import os
 import sys
 
 # Add the project root to the Python path before any other imports
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+try:
+    from nest.utils.platform_paths import PlatformPaths
+    platform_paths = PlatformPaths()
+    project_root = str(platform_paths._get_portable_dir())
+except ImportError:
+    # Fallback for initial import before platform_paths is available
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -81,7 +87,13 @@ class FixedHeaderTreeview(ttk.Treeview):
 # Fix module import issues when running directly
 if __name__ == '__main__':
     # Add the parent directory to the Python path so 'nest' can be found
-    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from nest.utils.platform_paths import PlatformPaths
+        platform_paths = PlatformPaths()
+        parent_dir = str(platform_paths._get_portable_dir())
+    except ImportError:
+        # Fallback for initial import before platform_paths is available
+        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(0, parent_dir)
     # Now imports of nest.* will work correctly
 
@@ -104,14 +116,11 @@ logging.getLogger('matplotlib').setLevel(logging.INFO)
     
 def setup_logging():
     """Set up proper logging with both file and console handlers."""
-    script_dir = get_script_dir()
-    log_dir = os.path.join(script_dir, "logs")
+    from nest.utils.platform_paths import PlatformPaths
+    platform_paths = PlatformPaths()
+    log_dir = platform_paths.ensure_dir_exists(platform_paths.get_logs_dir())
 
-    # Create logs directory if it doesn't exist
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-
-    log_file = os.path.join(log_dir, "app.log")
+    log_file = log_dir / "app.log"
 
     # Clear previous handlers
     root_logger = logging.getLogger()
@@ -358,39 +367,45 @@ def restart_script():
 
 
 def create_required_folders():
-    """Create required folder structure if it doesn't exist."""
+    """Create required folder structure using platform-appropriate locations."""
+    from nest.utils.platform_paths import PlatformPaths
+    platform_paths = PlatformPaths()
+    
+    # Create platform-appropriate directories
+    directories = {
+        'config': platform_paths.get_config_dir(),
+        'cache': platform_paths.get_cache_dir(),
+        'logs': platform_paths.get_logs_dir(),
+        'data': platform_paths.get_user_data_dir() / 'data',
+        'reports': platform_paths.get_user_data_dir() / 'reports',
+        'templates': platform_paths.get_user_data_dir() / 'templates',
+    }
+    
+    for name, path in directories.items():
+        platform_paths.ensure_dir_exists(path)
+        logging.info(f"Created/verified {name} directory: {path}")
+        
+    # Create subdirectories for data
+    data_subdirs = ['customers', 'tickets', 'inventory']
+    for subdir in data_subdirs:
+        subdir_path = directories['data'] / subdir
+        platform_paths.ensure_dir_exists(subdir_path)
+        logging.info(f"Created/verified data subdirectory: {subdir_path}")
+        
     script_dir = get_script_dir()
-    required_folders = [
-        "ui",
-        "utils",
-        "logs",
-        "data",
-        "config",
+    dev_folders = [
         "resources",
         "resources/icons",
         "resources/images",
-        "data/customers",
-        "data/tickets",
-        "data/inventory",
-        "reports",
-        "templates",
     ]
-
-    for folder in required_folders:
+    
+    for folder in dev_folders:
         folder_path = os.path.join(script_dir, folder)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-            logging.info(f"Created missing directory: {folder}")
+            logging.info(f"Created missing development directory: {folder}")
         else:
-            logging.debug(f"Directory '{folder}' already exists.")
-
-    # Create placeholder files in empty directories to ensure they're tracked by git
-    for folder in required_folders:
-        folder_path = os.path.join(script_dir, folder)
-        placeholder_file = os.path.join(folder_path, ".gitkeep")
-        if not os.listdir(folder_path) and not os.path.exists(placeholder_file):
-            with open(placeholder_file, "w") as f:
-                f.write("# This file ensures the directory is tracked by git\n")
+            logging.debug(f"Development directory '{folder}' already exists.")
 
 
 # --- GUI Application Using Tkinter ---
