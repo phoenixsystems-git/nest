@@ -200,10 +200,6 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
         error_msg = f"Unexpected error in get_ai_response: {str(e)}"
         logging.exception(error_msg)
         return get_fallback_response(user_message)
-                logging.warning(f"Model {selected_model} not found in config, defaulting to {model_name}")
-        
-        # Log which AI model is being used
-        logging.info(f"Using AI model: {selected_model_name} (API: {use_api}, Model ID: {model_name})")
         
         response_text = "Sorry, I couldn't process your request."
         
