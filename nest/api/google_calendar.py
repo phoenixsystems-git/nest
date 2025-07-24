@@ -31,12 +31,12 @@ class GoogleCalendarClient:
     
     def _setup_paths(self):
         """Setup paths for token and credentials files"""
-        # Base directory is project root
-        base_dir = Path(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        from nest.utils.platform_paths import PlatformPaths
+        platform_paths = PlatformPaths()
         
         # Create data/google directory if it doesn't exist
-        google_dir = base_dir / 'data' / 'google'
-        google_dir.mkdir(parents=True, exist_ok=True)
+        google_dir = platform_paths.get_user_data_dir() / 'data' / 'google'
+        platform_paths.ensure_dir_exists(google_dir)
         
         self.token_path = google_dir / 'token.pickle'
         self.credentials_path = google_dir / 'credentials.json'

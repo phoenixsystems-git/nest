@@ -32,7 +32,13 @@ except ImportError:
         # Define minimal ConfigManager for standalone mode if needed
         class ConfigManager:
             def __init__(self):
-                self.config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "config.json")
+                try:
+                    from .platform_paths import PlatformPaths
+                    platform_paths = PlatformPaths()
+                    config_dir = platform_paths.get_config_dir()
+                    self.config_path = str(config_dir / "config.json")
+                except ImportError:
+                    self.config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "config.json")
                 self.config = self._load_config()
                 
             def _load_config(self):

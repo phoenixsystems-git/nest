@@ -16,12 +16,13 @@ def load_config():
     """
     Load configuration settings from the config.json file located in the project root.
     """
-    # Get the directory of this file (utils folder)
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Assuming project root is one level up:
-config_path = os.path.join(os.path.dirname(__file__), 'config', 'config.json')
-    with open(config_path, "r") as f:
-        return json.load(f)
+    try:
+        from nest.utils.config import load_config as main_load_config
+        return main_load_config()
+    except ImportError:
+        config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'config.json')
+        with open(config_path, "r") as f:
+            return json.load(f)
 
 # Load configuration and extract the API key for RepairDesk.
 config = load_config()

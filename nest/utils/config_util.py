@@ -16,19 +16,26 @@ class ConfigManager:
 
     def __init__(self):
         if self._config is None:
-            self._config_path = os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "config", "config.json"
-            )
+            try:
+                from .platform_paths import PlatformPaths
+                platform_paths = PlatformPaths()
+                config_dir = platform_paths.ensure_dir_exists(platform_paths.get_config_dir())
+                self._config_path = str(config_dir / "config.json")
+            except ImportError:
+                self._config_path = os.path.join(
+                    os.path.dirname(os.path.dirname(__file__)), "config", "config.json"
+                )
+            self._config = None
             self._load_config()
 
     def _load_config(self) -> None:
-        """Load configuration from file.
+        """Load configuration from file. Creates default config if file doesn't exist.
         
         If configuration file doesn't exist or is empty, load default AI API configurations
         and models to ensure essential functionality works.
         """
         try:
-            if os.path.exists(self._config_path):
+            if self._config_path and os.path.exists(self._config_path):
                 with open(self._config_path, "r") as f:
                     self._config = json.load(f)
                 logging.info("Configuration loaded successfully")
@@ -51,10 +58,11 @@ class ConfigManager:
     def _save_config(self) -> None:
         """Save configuration to file."""
         try:
-            os.makedirs(os.path.dirname(self._config_path), exist_ok=True)
-            with open(self._config_path, "w") as f:
-                json.dump(self._config, f, indent=2)
-            logging.info("Configuration saved successfully")
+            if self._config_path:
+                os.makedirs(os.path.dirname(self._config_path), exist_ok=True)
+                with open(self._config_path, "w") as f:
+                    json.dump(self._config, f, indent=2)
+                logging.info("Configuration saved successfully")
         except Exception as e:
             logging.error(f"Error saving config: {e}")
             
@@ -178,8 +186,10 @@ class ConfigManager:
         
         Special handling for repairdesk_api_key and api_key to ensure consistency.
         """
+        if not self._config:
+            return default
+            
         if key == 'repairdesk_api_key' and key not in self._config:
-            # Try to get from api_key or repairdesk.api_key
             return self._config.get('api_key', self._config.get('repairdesk', {}).get('api_key', default))
         
         return self._config.get(key, default)
@@ -189,6 +199,9 @@ class ConfigManager:
         
         Checks multiple locations where the API key might be stored to ensure consistency.
         """
+        if not self._config:
+            return ""
+            
         # Check all possible locations for the API key and use the first non-empty one
         api_key = self._config.get("repairdesk_api_key", "")
         
@@ -204,11 +217,13 @@ class ConfigManager:
 
     def get_repairdesk_base_url(self) -> str:
         """Get the RepairDesk base URL from configuration."""
+        if not self._config:
+            return ""
         return self._config.get("repairdesk", {}).get("base_url", "").rstrip("/")
     
     def get_all(self) -> Dict[str, Any]:
         """Get the entire configuration dictionary."""
-        return self._config
+        return self._config if self._config else {}
         
     def get_store_name(self) -> str:
         """Get the proper store name from configuration.
@@ -216,11 +231,14 @@ class ConfigManager:
         Returns:
             The store's display name or the store slug if no name is set
         """
+        if not self._config:
+            return "Unknown Store"
+            
         store_name = self._config.get("store_name", "")
         # Fall back to store_slug if store_name is not set
         if not store_name:
             store_name = self._config.get("store_slug", "")
-        return store_name
+        return store_name if store_name else "Unknown Store"
 
 
 
@@ -250,4 +268,8 @@ def get_config_value(key, default=None):
 def set_config_value(key, value, encrypt=False):
     """Set a configuration value."""
     config_manager = ConfigManager()
-    return config_manager.set(key, value, encrypt)
+    if config_manager._config is None:
+        config_manager._config = {}
+    config_manager._config[key] = value
+    config_manager._save_config()
+    return True

@@ -57,8 +57,11 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
     try:
         # Load config first to check API keys
         try:
-            config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'nest', 'config.json')
-            with open(config_path, 'r') as file:
+            from nest.utils.platform_paths import PlatformPaths
+            platform_paths = PlatformPaths()
+            config_dir = platform_paths.get_config_dir()
+            config_path = config_dir / 'config.json'
+            with open(str(config_path), 'r') as file:
                 config = json.load(file)
         except Exception as e:
             logging.error(f"Error loading configuration: {str(e)}")
