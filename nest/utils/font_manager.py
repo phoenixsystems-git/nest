@@ -17,7 +17,9 @@ def get_font_path():
         try:
             from .platform_paths import PlatformPaths
             platform_paths = PlatformPaths()
-            base_path = str(platform_paths._get_portable_dir())
+            # For fonts, we need to use the actual script directory, not user data directory
+            current_file = os.path.abspath(__file__)
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
             logger.debug(f"Using platform paths base: {base_path}")
         except ImportError as e:
             logger.warning(f"Platform paths import failed: {e}, using fallback")

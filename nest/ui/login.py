@@ -634,12 +634,10 @@ class LoginFrame(ttk.Frame):
             elif "image" in user:
                 last_login_data["avatar_url"] = user["image"]
             
-            # Get the root directory of the Nest application.
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            # Go up one level to the nest directory
-            root_dir = os.path.dirname(current_dir)
-            
-            last_login_path = os.path.join(root_dir, "last_login.json")
+            from nest.utils.platform_paths import PlatformPaths
+            platform_paths = PlatformPaths()
+            user_data_dir = platform_paths.ensure_dir_exists(platform_paths.get_user_data_dir())
+            last_login_path = str(user_data_dir / "last_login.json")
             with open(last_login_path, 'w') as f:
                 json.dump(last_login_data, f, indent=4)
             logging.info(f"Last login data saved to {last_login_path}")
@@ -1947,7 +1945,10 @@ class LoginFrame(ttk.Frame):
             
         # Try to auto-populate with last logged in user from last_login.json
         try:
-            last_login_path = os.path.join(get_script_dir(), "last_login.json")
+            from nest.utils.platform_paths import PlatformPaths
+            platform_paths = PlatformPaths()
+            user_data_dir = platform_paths.ensure_dir_exists(platform_paths.get_user_data_dir())
+            last_login_path = str(user_data_dir / "last_login.json")
             if os.path.exists(last_login_path):
                 with open(last_login_path, 'r') as f:
                     try:
