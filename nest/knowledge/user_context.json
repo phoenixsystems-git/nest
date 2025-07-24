@@ -1,15 +1,15 @@
 {
   "business": {
-    "name": "Elite Repairs",
-    "slug": "eliterepairs",
-    "type": "Technology Services",
+    "name": "Phoenix Systems",
+    "slug": "phoenix-systems",
+    "type": "Service Provider",
     "specialty": "Customer service and repair"
   },
   "user": {
     "name": "Codey  O\u2019Connor",
     "role": "Store admin",
     "id": "57714",
-    "last_login": "2025-07-24 19:27:07"
+    "last_login": "2025-07-24 12:12:59"
   },
   "personalization": {
     "business_reference": "our shop",
