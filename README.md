@@ -204,4 +204,6 @@ For support and questions:
 - Review the troubleshooting guide
 - Contact the development team
 
+For additional assistance, please ensure you have the latest version installed.
+
 ---
