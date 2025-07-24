@@ -378,7 +378,8 @@ class DiagnosticsTab(ttk.Frame):
         except Exception as e:
             logging.error(f"Error in hardware tests: {e}")
             # Update UI on error
-            self.after(100, lambda: self._show_hardware_test_error(str(e)))
+            error_msg = str(e)
+            self.after(100, lambda: self._show_hardware_test_error(error_msg))
         
     def _update_hw_progress_status(self, text):
         """Update hardware test progress status text from a background thread."""
@@ -782,7 +783,8 @@ class DiagnosticsTab(ttk.Frame):
                 
         except Exception as e:
             logging.error(f"Error in storage tests: {e}")
-            self.after(100, lambda: self._show_storage_error(str(e)))
+            error_msg = str(e)
+            self.after(100, lambda: self._show_storage_error(error_msg))
             
     def _update_storage_progress_status(self, text):
         """Update storage test progress status text from a background thread."""
@@ -1548,7 +1550,8 @@ class DiagnosticsTab(ttk.Frame):
         except Exception as e:
             logging.error(f"Error in diagnostics: {e}")
             # Update UI on error
-            self.after(100, lambda: self._update_ui_with_error(str(e)))
+            error_msg = str(e)
+            self.after(100, lambda: self._update_ui_with_error(error_msg))
     
     def export_diagnostic_report(self):
         """Save the diagnostic report to a file."""
@@ -1812,7 +1815,8 @@ class DiagnosticsTab(ttk.Frame):
             
         except Exception as e:
             logging.error(f"Error in full diagnostics: {e}")
-            self.after(100, lambda: self._update_ui_with_error(str(e)))
+            error_msg = str(e)
+            self.after(100, lambda: self._update_ui_with_error(error_msg))
         """Save the diagnostic report to a file."""
         if not self.diagnostics_results or 'report' not in self.diagnostics_results:
             messagebox.showinfo("No Report Available", "Please run diagnostics first to generate a report.")

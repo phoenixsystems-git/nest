@@ -244,8 +244,8 @@ class AppointmentsModule(ttk.Frame):
                 # Update UI from the main thread
                 self.after(0, lambda: self._update_connection_status(False))
         except Exception as e:
-            # Update UI from the main thread
-            self.after(0, lambda: self._handle_connection_error(str(e)))
+            error_msg = str(e)
+            self.after(0, lambda: self._handle_connection_error(error_msg))
     
     def _update_connection_status(self, connected):
         """Update the connection status in the UI"""
@@ -323,7 +323,9 @@ class AppointmentsModule(ttk.Frame):
             # Update UI in the main thread
             self.after(0, self._update_events_ui)
         except Exception as e:
-            self.after(0, lambda: self._handle_loading_error(str(e)))
+            logging.error(f"Error fetching events: {e}")
+            error_msg = str(e)
+            self.after(0, lambda: self._handle_loading_error(error_msg))
         finally:
             self.after(0, lambda: setattr(self, 'loading', False))
     
