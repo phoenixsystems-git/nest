@@ -201,8 +201,6 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
         logging.exception(error_msg)
         return get_fallback_response(user_message)
         
-        response_text = "Sorry, I couldn't process your request."
-        
         try:
             if use_api == "claude":
                 # Claude API
