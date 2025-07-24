@@ -946,11 +946,9 @@ class NestApp:
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             # Clear any cached security credentials from memory
             try:
-                from nest.ui.customers import clear_pin_from_memory
-                clear_pin_from_memory()
-                logging.info("Cleared security PINs from memory on exit")
+                logging.info("Application closing - no sensitive data to clear")
             except Exception as e:
-                logging.warning(f"Failed to clear security PINs: {e}")
+                logging.warning(f"Error during cleanup: {e}")
             
             # Set a flag to indicate application is closing
             self.is_closing = True
@@ -982,12 +980,11 @@ class NestApp:
         logging.info("Locking session due to inactivity")
         self.locked = True
         
-        # Clear the cached PIN for security
+        # Clear any cached data for security
         try:
-            from nest.ui.customers import clear_pin_from_memory
-            clear_pin_from_memory()
+            logging.debug("Session locked - no sensitive data to clear")
         except Exception as e:
-            logging.error(f"Error clearing PIN from memory: {e}")
+            logging.error(f"Error during session lock cleanup: {e}")
             
         # Save all module states if needed before locking
         # This would be a good place to save any unsaved data
@@ -1111,10 +1108,9 @@ Your session was locked due to inactivity""",
         
         # Clear any sensitive data from memory
         try:
-            from nest.ui.customers import clear_pin_from_memory
-            clear_pin_from_memory()
+            logging.debug("User logout - no sensitive data to clear")
         except Exception as e:
-            logging.error(f"Error clearing PIN from memory during logout: {e}")
+            logging.error(f"Error during logout cleanup: {e}")
             
         # Clean up any open modules
         for module_name, module_instance in list(self.modules.items()):
@@ -2073,13 +2069,11 @@ Your session was locked due to inactivity""",
         # Ask for confirmation
         from tkinter import messagebox
         if messagebox.askyesno("Log Out", "Are you sure you want to log out?"):
-            # Clear any cached PINs from memory for security
+            # Clear any cached data from memory for security
             try:
-                from nest.ui.customers import clear_pin_from_memory
-                clear_pin_from_memory()
-                logging.info("Cleared security PINs from memory on logout")
+                logging.info("User logged out - no sensitive data to clear")
             except Exception as e:
-                logging.warning(f"Failed to clear security PINs: {e}")
+                logging.warning(f"Error during logout cleanup: {e}")
                 
             # Reset user state
             self.current_user = None
