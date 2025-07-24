@@ -54,27 +54,28 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
         else:
             return "I apologize, but my AI services are currently unavailable due to missing API configuration. However, I'm still here to help guide you through the Nest application. Please check with your administrator about setting up AI API keys, or let me know what specific task you need help with!"
     
+    # Load config first to check API keys
     try:
-        # Load config first to check API keys
-        try:
-            config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'nest', 'config.json')
-            with open(config_path, 'r') as file:
-                config = json.load(file)
-        except Exception as e:
-            logging.error(f"Error loading configuration: {str(e)}")
-            return get_fallback_response(user_message)
-        
-        # Check if we have valid API keys (not placeholder values)
-        valid_apis = []
-        for api_name in ['claude', 'openai', 'gemini']:
-            api_config = config.get(api_name, {})
-            api_key = api_config.get('api_key', '')
-            if api_key and api_key != f'YOUR_{api_name.upper()}_API_KEY_HERE':
-                valid_apis.append(api_name)
-        
-        if not valid_apis:
-            logging.warning("No valid AI API keys found in configuration")
-            return get_fallback_response(user_message)
+        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'nest', 'config.json')
+        with open(config_path, 'r') as file:
+            config = json.load(file)
+    except Exception as e:
+        logging.error(f"Error loading configuration: {str(e)}")
+        return get_fallback_response(user_message)
+    
+    # Check if we have valid API keys (not placeholder values)
+    valid_apis = []
+    for api_name in ['claude', 'openai', 'gemini']:
+        api_config = config.get(api_name, {})
+        api_key = api_config.get('api_key', '')
+        if api_key and api_key != f'YOUR_{api_name.upper()}_API_KEY_HERE':
+            valid_apis.append(api_name)
+    
+    if not valid_apis:
+        logging.warning("No valid AI API keys found in configuration")
+        return get_fallback_response(user_message)
+    
+    try:
         
         # Initialize variables
     ticket_data = None
@@ -201,10 +202,6 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
         error_msg = f"Unexpected error in get_ai_response: {str(e)}"
         logging.exception(error_msg)
         return get_fallback_response(user_message)
-            # It's a string, use it as the model name with default API
-            selected_model_name = selected_model
-            use_api = 'claude'  # Default to Claude
-            model_name = selected_model
             
             # Look for model in config if available
             if 'ai_models' in config:
@@ -309,8 +306,8 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
                             specific_ticket_id = f"T-{specific_ticket_number}"
                             
                         # Try to load the raw specific ticket data file directly
-                        from nest.utils.cache_utils import get_cache_directory
-                        cache_dir = get_cache_directory()
+                        from nest.utils.cache_utils import get_ticket_detail_directory
+                        cache_dir = get_ticket_detail_directory()
                         
                         potential_paths = [
                             os.path.join(cache_dir, f"ticket_detail_{specific_ticket_id}.json"),
@@ -815,8 +812,8 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
                                 specific_id = f"T-{specific_id[1:]}"
                                 
                             # Try multiple locations with both T- prefix and without
-                            from nest.utils.cache_utils import get_cache_directory
-                            cache_dir = get_cache_directory()
+                            from nest.utils.cache_utils import get_ticket_detail_directory
+                            cache_dir = get_ticket_detail_directory()
                             
                             paths = [
                                 os.path.join(cache_dir, f"ticket_detail_{specific_id}.json"),
@@ -1158,8 +1155,8 @@ def _call_claude_api(user_message: str, model_name: str, config: Dict,
             raw_specific_ticket_data = None
             
             # Try to load the specific ticket detail file directly
-            from nest.utils.cache_utils import get_cache_directory
-            cache_dir = get_cache_directory()
+            from nest.utils.cache_utils import get_ticket_detail_directory
+            cache_dir = get_ticket_detail_directory()
             
             potential_paths = [
                 os.path.join(cache_dir, f"ticket_detail_{specific_ticket}.json"),

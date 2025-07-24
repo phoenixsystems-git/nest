@@ -1470,9 +1470,9 @@ class RepairDeskAPI:
             self.logger.error("API key is missing, cannot create ticket detail files")
             return
         
-        # Create cache directory if it doesn't exist
-        from nest.utils.cache_utils import get_cache_directory
-        cache_dir = get_cache_directory()
+        # Create ticket data directory if it doesn't exist
+        from nest.utils.cache_utils import get_ticket_detail_directory
+        cache_dir = get_ticket_detail_directory()
         
         # Sort tickets by created_date (newest first) and limit to 50 most recent
         try:
