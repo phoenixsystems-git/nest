@@ -2291,7 +2291,15 @@ def check_dependencies_needed():
         return False  # Skip check if we've already been through the installation process
     
     # Check if dependency marker file exists and is recent (< 1 day old)
-    dep_marker = os.path.join(get_script_dir(), '.dep_check_passed')
+    try:
+        from nest.utils.platform_paths import PlatformPaths
+        platform_paths = PlatformPaths()
+        config_dir = platform_paths.get_config_dir()
+        platform_paths.ensure_dir_exists(config_dir)
+        dep_marker = config_dir / '.dep_check_passed'
+    except ImportError:
+        # Fallback to script directory if platform_paths unavailable
+        dep_marker = os.path.join(get_script_dir(), '.dep_check_passed')
     if os.path.exists(dep_marker):
         # Check if marker is recent (less than 24 hours old)
         if time.time() - os.path.getmtime(dep_marker) < 86400:  # 24 hours
@@ -2314,7 +2322,7 @@ def check_dependencies_needed():
     
     if not missing_packages:
         # Create or update dependency marker file
-        with open(dep_marker, 'w') as f:
+        with open(str(dep_marker), 'w') as f:
             f.write(f"Dependencies verified on {time.ctime()}")
         # Set environment variable to avoid repeating checks in this session
         os.environ["DEP_INSTALLED"] = "1"

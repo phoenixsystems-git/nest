@@ -11,16 +11,34 @@ def get_font_path():
     # Handle both development and production environments
     if hasattr(sys, '_MEIPASS'):  # PyInstaller bundled
         base_path = sys._MEIPASS
+        logger.debug(f"Using PyInstaller bundled path: {base_path}")
     else:
         # Use platform-appropriate directory handling
         try:
             from .platform_paths import PlatformPaths
             platform_paths = PlatformPaths()
             base_path = str(platform_paths._get_portable_dir())
-        except ImportError:
-            base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            logger.debug(f"Using platform paths base: {base_path}")
+        except ImportError as e:
+            logger.warning(f"Platform paths import failed: {e}, using fallback")
+            # More robust fallback - get the project root directory
+            current_file = os.path.abspath(__file__)
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
+            logger.debug(f"Using fallback base path: {base_path}")
+        except Exception as e:
+            logger.warning(f"Platform paths failed: {e}, using fallback")
+            # More robust fallback - get the project root directory
+            current_file = os.path.abspath(__file__)
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
+            logger.debug(f"Using fallback base path: {base_path}")
     
-    return os.path.join(base_path, "assets", "fonts", "Inter")
+    if hasattr(sys, '_MEIPASS'):
+        font_path = os.path.join(base_path, "assets", "fonts", "Inter")
+    else:
+        font_path = os.path.join(base_path, "nest", "assets", "fonts", "Inter")
+    
+    logger.debug(f"Final font path resolved to: {font_path}")
+    return font_path
 
 def init_fonts():
     """Initialize Inter font family for application use"""
