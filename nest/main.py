@@ -381,16 +381,26 @@ def create_required_folders():
         'templates': platform_paths.get_user_data_dir() / 'templates',
     }
     
+    # Create all directories efficiently with minimal logging
+    created_dirs = []
     for name, path in directories.items():
-        platform_paths.ensure_dir_exists(path)
-        logging.info(f"Created/verified {name} directory: {path}")
+        if not path.exists():
+            platform_paths.ensure_dir_exists(path)
+            created_dirs.append(f"{name}: {path}")
         
     # Create subdirectories for data
     data_subdirs = ['customers', 'tickets', 'inventory']
     for subdir in data_subdirs:
         subdir_path = directories['data'] / subdir
-        platform_paths.ensure_dir_exists(subdir_path)
-        logging.info(f"Created/verified data subdirectory: {subdir_path}")
+        if not subdir_path.exists():
+            platform_paths.ensure_dir_exists(subdir_path)
+            created_dirs.append(f"data/{subdir}: {subdir_path}")
+    
+    # Log only newly created directories
+    if created_dirs:
+        logging.info(f"Created directories: {', '.join(created_dirs)}")
+    else:
+        logging.debug("All required directories already exist")
         
     script_dir = get_script_dir()
     dev_folders = [
@@ -403,7 +413,7 @@ def create_required_folders():
         folder_path = os.path.join(script_dir, folder)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-            logging.info(f"Created missing development directory: {folder}")
+            logging.debug(f"Created development directory: {folder}")
         else:
             logging.debug(f"Development directory '{folder}' already exists.")
 
@@ -2280,27 +2290,13 @@ def check_dependencies_needed():
     if os.environ.get("DEP_INSTALLED") == "1":
         return False  # Skip check if we've already been through the installation process
     
-    # Skip dependency check if we're in a restart loop (more than 3 restarts)
-    restart_count_file = os.path.join(get_script_dir(), '.restart_count')
-    restart_count = 0
-    if os.path.exists(restart_count_file):
-        try:
-            with open(restart_count_file, 'r') as f:
-                restart_count = int(f.read().strip() or '0')
-        except:
-            restart_count = 0
-    
-    # If we've restarted more than 3 times, assume dependencies are installed
-    # to break out of any potential infinite loops
-    if restart_count >= 3:
-        logging.warning("Multiple restart attempts detected. Assuming dependencies are installed.")
-        # Set the environment variable to avoid checks on the next run
-        os.environ["DEP_INSTALLED"] = "1"
-        return False
-    
-    # Increment restart count
-    with open(restart_count_file, 'w') as f:
-        f.write(str(restart_count + 1))
+    # Check if dependency marker file exists and is recent (< 1 day old)
+    dep_marker = os.path.join(get_script_dir(), '.dep_check_passed')
+    if os.path.exists(dep_marker):
+        # Check if marker is recent (less than 24 hours old)
+        if time.time() - os.path.getmtime(dep_marker) < 86400:  # 24 hours
+            os.environ["DEP_INSTALLED"] = "1"  # Set env var to avoid future checks
+            return False  # Dependencies recently verified, skip check
     
     # Basic dependencies required for the app to function
     required_packages = [
@@ -2310,22 +2306,13 @@ def check_dependencies_needed():
     if platform.system().lower() == 'windows':
         required_packages.extend(['pywin32', 'WMI'])
     
-    # Check if dependency marker file exists and is recent (< 1 day old)
-    dep_marker = os.path.join(get_script_dir(), '.dep_check_passed')
-    if os.path.exists(dep_marker):
-        # Check if marker is recent (less than 24 hours old)
-        if time.time() - os.path.getmtime(dep_marker) < 86400:  # 24 hours
-            return False  # Dependencies recently verified, skip check
-    
     # Check if all essential packages are installed
-    # We'll be optimistic and only report missing if we're sure
-    all_good = True
+    missing_packages = []
     for package in required_packages:
         if not check_module_installed(package):
-            all_good = False
-            break
+            missing_packages.append(package)
     
-    if all_good:
+    if not missing_packages:
         # Create or update dependency marker file
         with open(dep_marker, 'w') as f:
             f.write(f"Dependencies verified on {time.ctime()}")
@@ -2333,7 +2320,7 @@ def check_dependencies_needed():
         os.environ["DEP_INSTALLED"] = "1"
         return False  # All dependencies installed
     
-    # If we get here, we need to install some dependencies
+    logging.info(f"Missing dependencies: {', '.join(missing_packages)}")
     return True
 
 

@@ -12,12 +12,7 @@ def get_font_path():
     if hasattr(sys, '_MEIPASS'):  # PyInstaller bundled
         base_path = sys._MEIPASS
     else:
-        # Try the absolute path first
-        abs_path = r"D:\Nest Development (GitHub)\Nest2.1\nest\assets\fonts\Inter"
-        if os.path.exists(abs_path):
-            return abs_path
-        
-        # Fall back to using platform-appropriate directory handling
+        # Use platform-appropriate directory handling
         try:
             from .platform_paths import PlatformPaths
             platform_paths = PlatformPaths()
