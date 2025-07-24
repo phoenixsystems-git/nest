@@ -1,0 +1,36 @@
+{
+  "electronics_repair": {
+    "common_issues": {
+      "smartphone": [
+        "Cracked screen",
+        "Battery not charging",
+        "Water damage",
+        "Overheating",
+        "Software freezing"
+      ],
+      "laptop": [
+        "No power",
+        "Blue screen",
+        "Keyboard not working",
+        "Fan noise",
+        "Slow performance"
+      ]
+    },
+    "repair_tips": {
+      "cracked_screen": "For cracked screens, ensure you have the correct replacement part and specialized tools. Careful handling of the ribbon cables is essential.",
+      "battery_issues": "Always discharge batteries to less than 25% before replacement. Check for swelling and handle with care.",
+      "water_damage": "Immediately power off the device, remove the battery if possible, and place in rice or silica gel for 48-72 hours."
+    },
+    "pricing": {
+      "screen_repair": {
+        "smartphone": "$80-200 depending on model",
+        "laptop": "$150-400 depending on model"
+      },
+      "battery_replacement": {
+        "smartphone": "$50-100",
+        "laptop": "$100-200"
+      }
+    },
+    "warranty": "All repairs come with a 90-day warranty covering parts and labor."
+  }
+}

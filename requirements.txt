@@ -1,0 +1,44 @@
+
+# Nest 2.4 Requirements
+# Updated on 2025-05-19
+
+# Core dependencies
+requests>=2.28.1
+Pillow>=9.3.0  # For image processing
+Pillow[tk]>=9.3.0  # For ImageTk support (required for login UI)
+pillow>=9.3.0  # Some systems require lowercase for pip
+
+psutil>=5.9.0  # For system information
+python-dateutil>=2.8.2
+pytz>=2022.1
+cryptography>=38.0.1  # For encryption
+beautifulsoup4>=4.11.1  # HTML parsing
+
+# UI enhancements
+ttkthemes>=3.2.2
+customtkinter>=5.0.0
+tkcalendar>=1.6.1  # Calendar widget for appointments
+
+# Google Calendar API
+google-api-python-client>=2.70.0
+google-auth-httplib2>=0.1.0
+google-auth-oauthlib>=0.5.3
+
+# Platform-specific dependencies
+# Linux
+pyudev>=0.24.0; platform_system == "Linux"  # Hardware detection on Linux
+# Windows
+pywin32>=304; platform_system == "Windows"  # Windows-specific functionality
+WMI>=1.5.1; platform_system == "Windows"    # Windows Management Instrumentation
+# macOS
+pyobjc>=9.0; platform_system == "Darwin"    # macOS specific functionality
+
+# Optional dependencies
+matplotlib>=3.7.0  # For charts and reports
+openai>=1.0.0  # For AI API integration
+PyQt5>=5.15.6; platform_system == "Windows"  # Enhanced UI for Windows
+pyserial>=3.5  # For hardware communication
+
+# Notes:
+# - tkinter must be installed via your system package manager (e.g., python3-tk on Ubuntu/Debian)
+# - If using additional modules, add them below as needed.

@@ -1,0 +1,23 @@
+{
+  "business": {
+    "name": "Elite Repairs",
+    "slug": "eliterepairs",
+    "type": "Technology Services",
+    "specialty": "Customer service and repair"
+  },
+  "user": {
+    "name": "Codey  O\u2019Connor",
+    "role": "Store admin",
+    "id": "57714",
+    "last_login": "2025-07-24 19:27:07"
+  },
+  "personalization": {
+    "business_reference": "our shop",
+    "tone": "friendly and helpful",
+    "response_style": "direct and conversational",
+    "ai_instructions": "IMPORTANT INSTRUCTIONS: DO NOT use last name in responses. DO NOT begin every response with greetings like 'Hello' or 'Hi' followed by name, only the first response. Respond directly to questions without these formalities after that."
+  },
+  "ticket_details": {
+    "instructions": "VERY IMPORTANT INSTRUCTIONS: When asked about notes, comments, updates, or information about a specific ticket, you MUST refer to and summarize any notes found in the ticket data. Even if the notes are diagnostic reports or system information, they ARE still notes/comments on the ticket and should be mentioned. Any content in the 'msg_text' field IS a note/comment. Do NOT say there are no notes or comments if there are any present in the data. Pay special attention to the 'notes' arrays in both the processed data AND raw data sections."
+  }
+}
