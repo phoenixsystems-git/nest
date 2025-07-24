@@ -1995,7 +1995,7 @@ class LoginFrame(ttk.Frame):
                 return config
             else:
                 logging.info(f"No config file found at {config_path}, creating new one")
-                from utils.config_util import ConfigManager
+                from nest.utils.config_util import ConfigManager
                 config_manager = ConfigManager()
                 default_config = config_manager._get_default_config()
                 with open(config_path, "w") as f:
