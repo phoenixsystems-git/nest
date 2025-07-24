@@ -1,45 +1,193 @@
-Comprehensive Nest 2.0 Linux Port Guide
-Based on our analysis of the RepairDesk API integration and your Linux port specifications, I've expanded the guide with detailed instructions for a robust Linux port. This comprehensive document covers every aspect of the porting process, from environment setup to testing and troubleshooting.
-Table of Contents
+# Nest - RepairDesk Management System
 
-Environment Setup
-Codebase Modifications
-Hardware Detection Adaptations
-Path Handling
-API Integration
-UI and Theming
-Testing and Validation
-Distribution and Deployment
-Troubleshooting
-Performance Optimization
+![Python](https://img.shields.io/badge/python-3.12+-blue.svg)
+![License](https://img.shields.io/badge/license-Private-red.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey.svg)
 
-## Linux Branch Development Notes
+**Nest** is a comprehensive computer repair shop management system built with Python Tkinter, designed to integrate seamlessly with the RepairDesk API. It provides repair shops with a complete solution for managing tickets, customers, inventory, diagnostics, and business operations.
 
-### Platform Compatibility Layer
-The Nest 2.1 application uses a platform abstraction layer for OS-specific operations:
-- System information collection (`nest/utils/system_info.py`)
-- File system access (`nest/utils/file_manager.py`)
-- Process management (`nest/utils/system/process_manager.py`)
-- Storage diagnostics (`nest/utils/diagnostics/storage_health.py`)
-- Feature detection (`nest/utils/feature_detection.py`)
+## 🚀 Features
 
-### Linux-Specific Requirements
-- Python 3.13 with Tkinter/TTK support
-- External packages: smartmontools, lsblk, dmidecode
-- X11 support for UI rendering (Wayland support partial)
+### Core Functionality
+- **RepairDesk API Integration**: Full integration with RepairDesk for ticket management
+- **Customer Management**: Complete customer database with purchase history
+- **Inventory Control**: Parts tracking and inventory management
+- **Ticket Management**: Create, update, and track repair tickets
+- **Appointment Scheduling**: Google Calendar integration for appointments
 
-### Known Platform Differences
-- UI rendering: Font rendering and widget spacing may differ slightly
-- Performance metrics: CPU/Memory monitoring uses different backends
-- File paths: All paths use pathlib.Path for normalization
+### Advanced Tools
+- **Hardware Diagnostics**: Comprehensive PC, Android, and iOS diagnostic tools
+- **AI Integration**: Claude AI for intelligent ticket analysis and assistance
+- **Reporting System**: Business reports and analytics
+- **Cross-Platform Support**: Native Windows and Linux compatibility
 
-### Testing Cross-Platform Changes
-Each module contains platform-specific tests in its `tests/` directory
+### Security Features
+- **Environment Variables**: Secure API key management
+- **Data Protection**: Local data caching with security best practices
+- **Access Control**: User authentication and role management
 
-### RepairDesk Theme Integration
-- The RepairDesk theme system supports both Windows and Linux
-- Primary color: #017E84 (RepairDesk teal)
-- Font fallbacks are implemented for cross-platform compatibility
+## 📋 Requirements
+
+- **Python**: 3.12 or higher
+- **Operating System**: Windows 10+ or Linux (Ubuntu 20.04+, Fedora 35+, Arch Linux)
+- **Dependencies**: See `requirements.txt` for complete list
+
+### System Dependencies (Linux)
+```bash
+# Ubuntu/Debian
+sudo apt install python3-tk python3-dev libffi-dev libssl-dev
+
+# Fedora/RHEL  
+sudo dnf install python3-tkinter python3-devel libffi-devel openssl-devel
+
+# Arch Linux
+sudo pacman -S tk python-pip
+```
+
+## 🛠️ Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/phoenixsystems-git/nest.git
+   cd nest
+   ```
+
+2. **Create virtual environment**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys
+   ```
+
+5. **Run the application**
+   ```bash
+   python launch_nest.py
+   ```
+
+## ⚙️ Configuration
+
+### Environment Variables
+Create a `.env` file in the project root with the following variables:
+
+```env
+# RepairDesk API Configuration
+REPAIRDESK_API_KEY=your_repairdesk_api_key_here
+
+# AI API Keys (optional)
+CLAUDE_API_KEY=your_claude_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Store Configuration
+STORE_NAME=Your Store Name
+STORE_SLUG=your_store_slug
+```
+
+### Configuration Files
+- `nest/config/config.json`: Main application configuration
+- `nest/config.json`: Legacy configuration (uses environment variables)
+
+## 🏗️ Project Structure
+
+```
+nest/
+├── launch_nest.py          # Application entry point
+├── requirements.txt        # Python dependencies
+├── .env.example           # Environment variables template
+├── nest/                  # Main application package
+│   ├── main.py           # Main application logic
+│   ├── api/              # RepairDesk API client
+│   ├── ui/               # Tkinter UI components
+│   ├── utils/            # Utility functions
+│   ├── config/           # Configuration management
+│   └── assets/           # Images and resources
+├── assets/               # Additional assets
+└── docs/                 # Documentation
+```
+
+## 🎯 Usage
+
+### Basic Workflow
+1. **Launch Application**: Run `python launch_nest.py`
+2. **Login**: Enter your RepairDesk credentials
+3. **Dashboard**: Access tickets, customers, and inventory
+4. **Create Tickets**: Add new repair tickets with customer information
+5. **Diagnostics**: Run hardware diagnostics on customer devices
+6. **Reports**: Generate business reports and analytics
+
+### Key Features
+- **Ticket Search**: Find tickets by number, customer, or device
+- **Batch Operations**: Process multiple tickets efficiently
+- **Offline Mode**: Work with cached data when internet is unavailable
+- **Export Data**: Export reports and ticket information
+
+## 🔧 Development
+
+### Setting Up Development Environment
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+python -m pytest tests/
+
+# Code formatting
+black nest/
+isort nest/
+```
+
+### Contributing Guidelines
+1. Create feature branches from `main`
+2. Follow PEP 8 coding standards
+3. Add tests for new functionality
+4. Update documentation as needed
+5. Submit pull requests for review
+
+## 📚 Documentation
+
+- **Installation Guide**: See above installation instructions
+- **API Documentation**: Check `docs/api.md`
+- **User Manual**: Available in `docs/user-guide.md`
+- **Linux Port Guide**: Detailed Linux setup in `docs/linux-port.md`
+
+## 🐛 Troubleshooting
+
+### Common Issues
+- **API Connection**: Verify RepairDesk API key and internet connection
+- **Missing Dependencies**: Ensure all requirements are installed
+- **Permission Errors**: Check file permissions for config and log directories
+- **Display Issues**: Verify Tkinter installation and display settings
+
+### Getting Help
+1. Check the troubleshooting section in documentation
+2. Review log files in the `logs/` directory
+3. Verify environment variable configuration
+4. Test with minimal configuration
+
+## 📄 License
+
+This project is private and proprietary. All rights reserved.
+
+## 🤝 Support
+
+For support and questions:
+- Check the documentation in the `docs/` folder
+- Review the troubleshooting guide
+- Contact the development team
+
+---
+
+**Nest** - Streamlining repair shop operations with powerful RepairDesk integration.
 
 1. Environment Setup
 System Requirements
@@ -2212,4 +2360,3 @@ def optimize_for_linux():
             style.theme_use("clam")
 This comprehensive guide should give you everything you need for a successful Linux port of Nest 2.0, with special attention to the RepairDesk API integration that we fixed. The guide covers all aspects from environment setup to distribution, with detailed code examples for each section.
 By following these instructions, your Linux port will maintain all the functionality of the Windows version while properly handling platform-specific differences. The RepairDesk API integration will work correctly, including the ticket lookup and comment posting that you highlighted as critical features.
-
