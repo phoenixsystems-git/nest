@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, simpledialog
 import os
 import json
 import threading
@@ -307,12 +307,15 @@ class AppointmentsModule(ttk.Frame):
     def _fetch_events_thread(self, start_date, end_date, force_refresh):
         """Fetch events in a separate thread"""
         try:
-            events = self.calendar_client.get_events(
-                self.calendar_id,
-                time_min=start_date,
-                time_max=end_date,
-                max_results=100
-            )
+            if self.calendar_client:
+                events = self.calendar_client.get_events(
+                    self.calendar_id,
+                    time_min=start_date,
+                    time_max=end_date,
+                    max_results=100
+                )
+            else:
+                events = []
             
             # Store events
             self.events = events
@@ -359,10 +362,35 @@ class AppointmentsModule(ttk.Frame):
             return "All day"
     
     def _highlight_event_dates(self):
-        """Highlight dates with events on the calendar"""
-        # TODO: Implement date highlighting once we get a better understanding
-        # of how to manipulate the calendar widget's appearance
-        pass
+        """Highlight dates that have events"""
+        if not hasattr(self, 'calendar') or not self.events:
+            return
+            
+        try:
+            event_dates = set()
+            for event in self.events:
+                start = event.get('start', {})
+                if 'date' in start:
+                    event_dates.add(start['date'])
+                elif 'dateTime' in start:
+                    date_str = start['dateTime'][:10]
+                    event_dates.add(date_str)
+            
+            for date_str in event_dates:
+                try:
+                    year, month, day = map(int, date_str.split('-'))
+                    if hasattr(self.calendar, '_calendar') and hasattr(self.calendar._calendar, 'calevent_create'):
+                        self.calendar._calendar.calevent_create(
+                            datetime.datetime(year, month, day).date(),
+                            'Event',
+                            'event_highlight'
+                        )
+                except (ValueError, AttributeError):
+                    continue
+                    
+        except Exception as e:
+            import logging
+            logging.warning(f"Failed to highlight event dates: {e}")
     
     def _handle_loading_error(self, error_msg):
         """Handle errors when loading events"""
@@ -524,32 +552,275 @@ class AppointmentsModule(ttk.Frame):
     
     def _create_appointment(self):
         """Show dialog to create a new appointment"""
-        # For now, just show a message that this feature is coming soon
-        messagebox.showinfo(
-            "Feature Coming Soon", 
-            "The appointment creation feature is coming soon. This will allow you to create appointments directly in Google Calendar."
-        )
-        
+        if not self.calendar_client:
+            messagebox.showerror("Error", "Google Calendar not connected. Please check your connection.")
+            return
+            
+        dialog = AppointmentDialog(self, "Create Appointment")
+        if dialog.result:
+            try:
+                event_data = {
+                    'summary': dialog.result['title'],
+                    'description': dialog.result['description'],
+                    'start': {
+                        'dateTime': dialog.result['start_datetime'].isoformat(),
+                        'timeZone': 'UTC',
+                    },
+                    'end': {
+                        'dateTime': dialog.result['end_datetime'].isoformat(),
+                        'timeZone': 'UTC',
+                    },
+                }
+                
+                created_event = self.calendar_client.create_event(
+                    self.calendar_id, 
+                    event_data['summary'],
+                    event_data['start']['dateTime'],
+                    event_data['end']['dateTime'],
+                    event_data.get('description', '')
+                )
+                if created_event:
+                    messagebox.showinfo("Success", "Appointment created successfully!")
+                    self._load_events()
+                else:
+                    messagebox.showerror("Error", "Failed to create appointment.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to create appointment: {str(e)}")
+    
     def _edit_appointment(self, event):
         """Show dialog to edit an appointment"""
-        # For now, just show a message that this feature is coming soon
-        messagebox.showinfo(
-            "Feature Coming Soon", 
-            "The appointment editing feature is coming soon. This will allow you to edit appointments directly in Google Calendar."
-        )
+        if not self.calendar_client:
+            messagebox.showerror("Error", "Google Calendar not connected. Please check your connection.")
+            return
+            
+        selection = self.events_list.curselection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select an appointment to edit.")
+            return
+            
+        selected_event = self.events[selection[0]]
+        
+        dialog = AppointmentDialog(self, "Edit Appointment", selected_event)
+        if dialog.result:
+            try:
+                event_data = {
+                    'summary': dialog.result['title'],
+                    'description': dialog.result['description'],
+                    'start': {
+                        'dateTime': dialog.result['start_datetime'].isoformat(),
+                        'timeZone': 'UTC',
+                    },
+                    'end': {
+                        'dateTime': dialog.result['end_datetime'].isoformat(),
+                        'timeZone': 'UTC',
+                    },
+                }
+                
+                updated_event = self.calendar_client.update_event(
+                    self.calendar_id, 
+                    selected_event['id'],
+                    event_data['summary'],
+                    event_data['start']['dateTime'],
+                    event_data['end']['dateTime'],
+                    event_data.get('description', '')
+                )
+                if updated_event:
+                    messagebox.showinfo("Success", "Appointment updated successfully!")
+                    self._load_events()
+                else:
+                    messagebox.showerror("Error", "Failed to update appointment.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to update appointment: {str(e)}")
     
     def _delete_appointment(self, event):
         """Show dialog to delete an appointment"""
-        # For now, just show a message that this feature is coming soon
-        messagebox.showinfo(
-            "Feature Coming Soon", 
-            "The appointment deletion feature is coming soon. This will allow you to delete appointments directly from Google Calendar."
+        if not self.calendar_client:
+            messagebox.showerror("Error", "Google Calendar not connected. Please check your connection.")
+            return
+            
+        selection = self.events_list.curselection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select an appointment to delete.")
+            return
+            
+        selected_event = self.events[selection[0]]
+        
+        result = messagebox.askyesno(
+            "Confirm Deletion", 
+            f"Are you sure you want to delete the appointment '{selected_event.get('summary', 'Untitled')}'?\n\nThis action cannot be undone."
         )
+        
+        if result:
+            try:
+                success = self.calendar_client.delete_event(self.calendar_id, selected_event['id'])
+                if success:
+                    messagebox.showinfo("Success", "Appointment deleted successfully!")
+                    self._load_events()
+                else:
+                    messagebox.showerror("Error", "Failed to delete appointment.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to delete appointment: {str(e)}")
     
     def _show_settings(self):
         """Show Google Calendar settings dialog"""
-        # For now, just show a message that this feature is coming soon
-        messagebox.showinfo(
-            "Feature Coming Soon", 
-            "The Google Calendar settings feature is coming soon. This will allow you to configure your Google Calendar integration."
-        )
+        dialog = CalendarSettingsDialog(self)
+        if dialog.result:
+            self.calendar_id = dialog.result.get('calendar_id', self.calendar_id)
+            self._load_events()
+        
+
+
+class AppointmentDialog:
+    """Dialog for creating/editing appointments"""
+    
+    def __init__(self, parent, title, event_data=None):
+        self.result = None
+        self.parent = parent
+        
+        self.dialog = tk.Toplevel(parent)
+        self.dialog.title(title)
+        self.dialog.geometry("400x300")
+        self.dialog.transient(parent)
+        self.dialog.grab_set()
+        
+        self.dialog.grid_columnconfigure(1, weight=1)
+        
+        row = 0
+        
+        ttk.Label(self.dialog, text="Title:").grid(row=row, column=0, sticky="w", padx=10, pady=5)
+        self.title_var = tk.StringVar(value=event_data.get('summary', '') if event_data else '')
+        ttk.Entry(self.dialog, textvariable=self.title_var).grid(row=row, column=1, sticky="ew", padx=10, pady=5)
+        row += 1
+        
+        ttk.Label(self.dialog, text="Start Date:").grid(row=row, column=0, sticky="w", padx=10, pady=5)
+        self.start_date_var = tk.StringVar()
+        if event_data and 'start' in event_data:
+            start_dt = event_data['start'].get('dateTime', event_data['start'].get('date', ''))
+            if start_dt:
+                self.start_date_var.set(start_dt[:10])
+        else:
+            self.start_date_var.set(datetime.datetime.now().strftime('%Y-%m-%d'))
+        ttk.Entry(self.dialog, textvariable=self.start_date_var).grid(row=row, column=1, sticky="ew", padx=10, pady=5)
+        row += 1
+        
+        ttk.Label(self.dialog, text="Start Time:").grid(row=row, column=0, sticky="w", padx=10, pady=5)
+        self.start_time_var = tk.StringVar(value="09:00")
+        ttk.Entry(self.dialog, textvariable=self.start_time_var).grid(row=row, column=1, sticky="ew", padx=10, pady=5)
+        row += 1
+        
+        ttk.Label(self.dialog, text="End Time:").grid(row=row, column=0, sticky="w", padx=10, pady=5)
+        self.end_time_var = tk.StringVar(value="10:00")
+        ttk.Entry(self.dialog, textvariable=self.end_time_var).grid(row=row, column=1, sticky="ew", padx=10, pady=5)
+        row += 1
+        
+        ttk.Label(self.dialog, text="Description:").grid(row=row, column=0, sticky="nw", padx=10, pady=5)
+        self.description_text = tk.Text(self.dialog, height=4, width=30)
+        self.description_text.grid(row=row, column=1, sticky="ew", padx=10, pady=5)
+        if event_data:
+            self.description_text.insert('1.0', event_data.get('description', ''))
+        row += 1
+        
+        button_frame = ttk.Frame(self.dialog)
+        button_frame.grid(row=row, column=0, columnspan=2, pady=20)
+        
+        ttk.Button(button_frame, text="Save", command=self._save).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Cancel", command=self._cancel).pack(side="left", padx=5)
+        
+        self.dialog.protocol("WM_DELETE_WINDOW", self._cancel)
+        
+    def _save(self):
+        try:
+            title = self.title_var.get().strip()
+            if not title:
+                messagebox.showerror("Error", "Title is required.")
+                return
+                
+            start_date = self.start_date_var.get()
+            start_time = self.start_time_var.get()
+            end_time = self.end_time_var.get()
+            description = self.description_text.get('1.0', 'end-1c').strip()
+            
+            start_datetime = datetime.datetime.strptime(f"{start_date} {start_time}", '%Y-%m-%d %H:%M')
+            end_datetime = datetime.datetime.strptime(f"{start_date} {end_time}", '%Y-%m-%d %H:%M')
+            
+            if end_datetime <= start_datetime:
+                messagebox.showerror("Error", "End time must be after start time.")
+                return
+                
+            self.result = {
+                'title': title,
+                'description': description,
+                'start_datetime': start_datetime,
+                'end_datetime': end_datetime
+            }
+            
+            self.dialog.destroy()
+            
+        except ValueError as e:
+            messagebox.showerror("Error", f"Invalid date/time format: {e}")
+            
+    def _cancel(self):
+        self.dialog.destroy()
+
+
+
+
+class CalendarSettingsDialog:
+    """Dialog for calendar settings"""
+    
+    def __init__(self, parent):
+        self.result = None
+        self.parent = parent
+        
+        self.dialog = tk.Toplevel(parent)
+        self.dialog.title("Calendar Settings")
+        self.dialog.geometry("350x200")
+        self.dialog.transient(parent)
+        self.dialog.grab_set()
+        
+        self.dialog.grid_columnconfigure(1, weight=1)
+        
+        row = 0
+        
+        ttk.Label(self.dialog, text="Calendar ID:").grid(row=row, column=0, sticky="w", padx=10, pady=5)
+        self.calendar_id_var = tk.StringVar(value=getattr(parent, 'calendar_id', 'primary'))
+        ttk.Entry(self.dialog, textvariable=self.calendar_id_var).grid(row=row, column=1, sticky="ew", padx=10, pady=5)
+        row += 1
+        
+        ttk.Label(self.dialog, text="Sync Frequency (minutes):").grid(row=row, column=0, sticky="w", padx=10, pady=5)
+        self.sync_freq_var = tk.StringVar(value="15")
+        ttk.Entry(self.dialog, textvariable=self.sync_freq_var).grid(row=row, column=1, sticky="ew", padx=10, pady=5)
+        row += 1
+        
+        ttk.Label(self.dialog, text="Default Duration (minutes):").grid(row=row, column=0, sticky="w", padx=10, pady=5)
+        self.duration_var = tk.StringVar(value="60")
+        ttk.Entry(self.dialog, textvariable=self.duration_var).grid(row=row, column=1, sticky="ew", padx=10, pady=5)
+        row += 1
+        
+        button_frame = ttk.Frame(self.dialog)
+        button_frame.grid(row=row, column=0, columnspan=2, pady=20)
+        
+        ttk.Button(button_frame, text="Save", command=self._save).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Cancel", command=self._cancel).pack(side="left", padx=5)
+        
+        self.dialog.protocol("WM_DELETE_WINDOW", self._cancel)
+        
+    def _save(self):
+        try:
+            calendar_id = self.calendar_id_var.get().strip()
+            sync_freq = int(self.sync_freq_var.get())
+            duration = int(self.duration_var.get())
+            
+            self.result = {
+                'calendar_id': calendar_id,
+                'sync_frequency': sync_freq,
+                'default_duration': duration
+            }
+            
+            self.dialog.destroy()
+            
+        except ValueError:
+            messagebox.showerror("Error", "Please enter valid numbers for frequency and duration.")
+            
+    def _cancel(self):
+        self.dialog.destroy()

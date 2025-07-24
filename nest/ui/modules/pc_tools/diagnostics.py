@@ -16,7 +16,8 @@ import logging
 import platform
 import threading
 import subprocess
-from tkinter import ttk, messagebox, scrolledtext, filedialog
+from tkinter import ttk, messagebox, scrolledtext
+from tkinter import filedialog
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
@@ -107,7 +108,7 @@ class DiagnosticsTab(ttk.Frame):
         self.save_button = ttk.Button(
             action_frame, 
             text="Save Diagnostic Report", 
-            command=self.save_diagnostic_report,
+            command=self.export_diagnostic_report,
             state="disabled"
         )
         self.save_button.pack(side="right", padx=(5, 0))
@@ -1191,13 +1192,13 @@ class DiagnosticsTab(ttk.Frame):
                 unique_ips = set(addr[4][0] for addr in addresses if addr[4][0])
                 
                 result["status"] = "Success"
-                result["ips"] = list(unique_ips)
-                result["latency"] = (end_time - start_time) * 1000  # Convert to ms
-                result["error"] = None
+                result["ips"] = str(list(unique_ips))
+                result["latency"] = str((end_time - start_time) * 1000)  # Convert to ms
+                result["error"] = ""
             except socket.gaierror as e:
                 result["status"] = "Failed"
-                result["ips"] = []
-                result["latency"] = None
+                result["ips"] = "[]"
+                result["latency"] = ""
                 result["error"] = f"DNS resolution failed: {e}"
                 
             results.append(result)
@@ -1549,7 +1550,7 @@ class DiagnosticsTab(ttk.Frame):
             # Update UI on error
             self.after(100, lambda: self._update_ui_with_error(str(e)))
     
-    def save_diagnostic_report(self):
+    def export_diagnostic_report(self):
         """Save the diagnostic report to a file."""
         if not self.diagnostics_results or 'report' not in self.diagnostics_results:
             messagebox.showinfo("No Report Available", "Please run diagnostics first to generate a report.")
@@ -1560,7 +1561,7 @@ class DiagnosticsTab(ttk.Frame):
         default_filename = f"diagnostic_report_{current_time}.txt"
         
         # Ask the user where to save the file
-        filename = tk.filedialog.asksaveasfilename(
+        filename = filedialog.asksaveasfilename(
             defaultextension=".txt",
             filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
             initialfile=default_filename,
@@ -1811,10 +1812,7 @@ class DiagnosticsTab(ttk.Frame):
             
         except Exception as e:
             logging.error(f"Error in full diagnostics: {e}")
-            # Update UI on error
             self.after(100, lambda: self._update_ui_with_error(str(e)))
-    
-    def save_diagnostic_report(self):
         """Save the diagnostic report to a file."""
         if not self.diagnostics_results or 'report' not in self.diagnostics_results:
             messagebox.showinfo("No Report Available", "Please run diagnostics first to generate a report.")
@@ -1825,7 +1823,7 @@ class DiagnosticsTab(ttk.Frame):
         default_filename = f"diagnostic_report_{current_time}.txt"
         
         # Ask the user where to save the file
-        filename = tk.filedialog.asksaveasfilename(
+        filename = filedialog.asksaveasfilename(
             defaultextension=".txt",
             filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
             initialfile=default_filename,
