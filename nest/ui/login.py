@@ -497,6 +497,7 @@ class LoginFrame(ttk.Frame):
             )
             
         # Auto-submit if 4 digits entered
+        pin = self.pin_var.get().strip()
         if len(pin) == 4:
             self.after(100, self.handle_login)
             
@@ -1172,7 +1173,7 @@ class LoginFrame(ttk.Frame):
         if hasattr(self.api_entry, 'placeholder') and self.api_key_var.get() == self.api_entry.placeholder:
             self.api_key_var.set("")
             
-        store_name = self.store_name_var.get().strip()
+        store_name = os.environ.get('StoreName', self.store_name_var.get().strip())
         api_key = self.api_key_var.get().strip()
         
         # Basic validation with improved error messages
@@ -1975,29 +1976,11 @@ class LoginFrame(ttk.Frame):
             self.handle_login()
 
     def find_config_dir(self):
-        """Find the configuration directory from the current path."""
-        # Start from the current directory
-        current_dir = os.getcwd()
-        
-        # Check if config directory exists at current level
-        if os.path.isdir(os.path.join(current_dir, "config")):
-            return os.path.join(current_dir, "config")
-            
-        # Check if we're in the ui/modules directory and need to go up
-        if os.path.basename(current_dir) == "modules" and os.path.basename(os.path.dirname(current_dir)) == "ui":
-            # Go up two levels
-            parent_dir = os.path.dirname(os.path.dirname(current_dir))
-            if os.path.isdir(os.path.join(parent_dir, "config")):
-                return os.path.join(parent_dir, "config")
-                
-        # Check for config at the parent directory
-        parent_dir = os.path.dirname(current_dir)
-        if os.path.isdir(os.path.join(parent_dir, "config")):
-            return os.path.join(parent_dir, "config")
-            
-        # As a last resort, create a config directory if it doesn't exist
-        os.makedirs(os.path.join(current_dir, "config"), exist_ok=True)
-        return os.path.join(current_dir, "config")
+        """Find the configuration directory using platform-appropriate location."""
+        from nest.utils.platform_paths import PlatformPaths
+        platform_paths = PlatformPaths()
+        config_dir = platform_paths.ensure_dir_exists(platform_paths.get_config_dir())
+        return str(config_dir)
 
     def load_config(self):
         """Load configuration from JSON file."""

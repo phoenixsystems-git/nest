@@ -46,9 +46,15 @@ class TicketContext:
         
         # Set up the last ticket file path based on execution environment
         if hasattr(os, 'getcwd'):
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            self.last_ticket_path = os.path.join(base_dir, "data", "last_ticket.json")
-            os.makedirs(os.path.dirname(self.last_ticket_path), exist_ok=True)
+            try:
+                from .platform_paths import PlatformPaths
+                platform_paths = PlatformPaths()
+                data_dir = platform_paths.ensure_dir_exists(platform_paths.get_user_data_dir() / 'data')
+                self.last_ticket_path = os.path.join(str(data_dir), "last_ticket.json")
+            except ImportError:
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                self.last_ticket_path = os.path.join(base_dir, "data", "last_ticket.json")
+                os.makedirs(os.path.dirname(self.last_ticket_path), exist_ok=True)
             
         # Initialize RepairDesk client if credentials are provided
         if api_key:

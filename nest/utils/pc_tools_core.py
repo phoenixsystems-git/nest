@@ -75,16 +75,22 @@ class PCToolsCore:
         self.last_snapshot_path = None
         self.last_json_path = None
         
-        # Base path for logs
-        if getattr(sys, 'frozen', False):
-            # We're running in a bundle (PyInstaller)
-            self.base_dir = os.path.dirname(sys.executable)
-        else:
-            # We're running in a normal Python environment
-            self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            
-        self.logs_dir = os.path.join(self.base_dir, "logs")
-        os.makedirs(self.logs_dir, exist_ok=True)
+        # Base path for logs using platform-appropriate directory handling
+        try:
+            from .platform_paths import PlatformPaths
+            platform_paths = PlatformPaths()
+            self.logs_dir = str(platform_paths.ensure_dir_exists(platform_paths.get_logs_dir()))
+            self.base_dir = str(platform_paths.get_user_data_dir())
+        except ImportError:
+            if getattr(sys, 'frozen', False):
+                # We're running in a bundle (PyInstaller)
+                self.base_dir = os.path.dirname(sys.executable)
+            else:
+                # We're running in a normal Python environment
+                self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                
+            self.logs_dir = os.path.join(self.base_dir, "logs")
+            os.makedirs(self.logs_dir, exist_ok=True)
         
         logging.info("PCToolsCore initialized")
     

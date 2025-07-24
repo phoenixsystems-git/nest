@@ -226,9 +226,10 @@ def load_ticket_data(include_specific_ticket=True):
         list: List of ticket data dictionaries
     """
     try:
-        # Get the directory of the current script (should be Nest 2.5 root)
-        script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        cache_path = os.path.join(script_dir, 'cache', 'ticket_cache.json')
+        from nest.utils.platform_paths import PlatformPaths
+        platform_paths = PlatformPaths()
+        cache_dir = platform_paths.ensure_dir_exists(platform_paths.get_cache_dir())
+        cache_path = cache_dir / 'ticket_cache.json'
         
         # Check if the cache file exists
         if not os.path.exists(cache_path):
@@ -249,11 +250,11 @@ def load_ticket_data(include_specific_ticket=True):
             
         # If we don't need to include a specific ticket, or if there's no specific ticket file,
         # just return the regular cache
-        if not include_specific_ticket or not os.path.exists(os.path.join(script_dir, 'cache', 'specific_ticket.json')):
+        specific_ticket_path = cache_dir / 'specific_ticket.json'
+        if not include_specific_ticket or not specific_ticket_path.exists():
             return tickets
             
         # Load the specific ticket data
-        specific_ticket_path = os.path.join(script_dir, 'cache', 'specific_ticket.json')
         with open(specific_ticket_path, 'r', encoding='utf-8') as f:
             specific_ticket = json.load(f)
             

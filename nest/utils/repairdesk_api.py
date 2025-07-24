@@ -57,11 +57,19 @@ class RepairDeskAPI:
             return False
     
     def _find_config_file(self) -> Optional[str]:
-        """Find the configuration file path."""
-        # Try common locations
+        """Find the configuration file path using platform-appropriate location."""
+        try:
+            from .platform_paths import PlatformPaths
+            platform_paths = PlatformPaths()
+            config_dir = platform_paths.get_config_dir()
+            config_path = config_dir / 'config.json'
+            if config_path.exists():
+                return str(config_path)
+        except ImportError:
+            pass
+        
+        # Fallback to common locations
         possible_paths = [
-            os.path.join(os.getcwd(), 'config', 'config.json'),
-            os.path.join(os.path.dirname(os.getcwd()), 'config', 'config.json'),
             os.path.join(os.path.dirname(__file__), '..', 'config', 'config.json'),
             os.path.join(os.path.dirname(__file__), 'config', 'config.json')
         ]
@@ -83,10 +91,17 @@ class RepairDeskAPI:
         """
         config_path = self._find_config_file()
         if not config_path:
-            # Create config directory if it doesn't exist
-            config_dir = os.path.join(os.getcwd(), 'config')
-            os.makedirs(config_dir, exist_ok=True)
-            config_path = os.path.join(config_dir, 'config.json')
+            # Create config directory using platform-appropriate location
+            try:
+                from .platform_paths import PlatformPaths
+                platform_paths = PlatformPaths()
+                config_dir = platform_paths.ensure_dir_exists(platform_paths.get_config_dir())
+                config_path = str(config_dir / 'config.json')
+            except ImportError:
+                # Fallback to current working directory
+                config_dir = os.path.join(os.getcwd(), 'config')
+                os.makedirs(config_dir, exist_ok=True)
+                config_path = os.path.join(config_dir, 'config.json')
         
         try:
             # Load existing config
@@ -869,8 +884,10 @@ class RepairDeskAPI:
         
         Creates the directory if it doesn't exist.
         """
-        # Define cache directory path - one level up from project root
-        cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'cache')
+        # Use platform-appropriate cache directory
+        from .platform_paths import PlatformPaths
+        platform_paths = PlatformPaths()
+        cache_dir = str(platform_paths.ensure_dir_exists(platform_paths.get_cache_dir()))
         
         # Create cache directory if it doesn't exist
         if not os.path.exists(cache_dir):
@@ -1303,9 +1320,10 @@ class RepairDeskAPI:
         Returns:
             str: Path to cache directory
         """
-        # Get the base directory for the application
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        cache_dir = os.path.join(base_dir, 'cache')
+        # Use platform-appropriate cache directory
+        from .platform_paths import PlatformPaths
+        platform_paths = PlatformPaths()
+        cache_dir = str(platform_paths.ensure_dir_exists(platform_paths.get_cache_dir()))
         
         # Create cache directory if it doesn't exist
         if not os.path.exists(cache_dir):

@@ -19,12 +19,19 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
-# Get the base directory for the Nest application
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC_DIR = os.path.join(BASE_DIR, 'nest')
-
-# Ensure log directory exists
-os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
+# Get the base directory for the Nest application using platform-appropriate paths
+try:
+    from nest.utils.platform_paths import PlatformPaths
+    platform_paths = PlatformPaths()
+    BASE_DIR = str(platform_paths._get_portable_dir())
+    SRC_DIR = os.path.join(BASE_DIR, 'nest')
+    
+    # Ensure log directory exists using platform-appropriate location
+    platform_paths.ensure_dir_exists(platform_paths.get_logs_dir())
+except ImportError:
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    SRC_DIR = os.path.join(BASE_DIR, 'nest')
+    os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
 
 # Dynamically import the refactored PCToolsModule
 try:
