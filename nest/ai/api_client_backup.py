@@ -75,9 +75,8 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
         logging.warning("No valid AI API keys found in configuration")
         return get_fallback_response(user_message)
     
-    try:
-        # Initialize variables
-        ticket_data = None
+    # Initialize variables
+    ticket_data = None
     oldest_ticket_id = None
     newest_ticket_id = None
     processed_tickets = []
@@ -201,30 +200,6 @@ def get_ai_response(user_message, selected_model=None, ticket_access=False, spec
         error_msg = f"Unexpected error in get_ai_response: {str(e)}"
         logging.exception(error_msg)
         return get_fallback_response(user_message)
-                for model in config['ai_models']:
-                    if model.get('name') == selected_model_name:
-                        use_api = model.get('api', 'claude')
-                        model_name = model.get('model', model_name)
-                        break
-            
-            # Initialize model_config to None
-            model_config = None
-            
-            # Look for model in ai_models list
-            for model in ai_models:
-                if model.get('name') == selected_model:
-                    model_config = model
-                    break
-            
-            if model_config:
-                # Use the exact configuration from config.json
-                use_api = model_config.get('api', 'claude')
-                model_name = model_config.get('model', '')
-                logging.info(f"Using model configuration from config.json: {selected_model_name} (API: {use_api}, ID: {model_name})")
-            else:
-                # Fallback to default Claude if not found
-                use_api = 'claude'
-                model_name = config.get('claude', {}).get('model', 'claude-3-opus-20240229')
                 logging.warning(f"Model {selected_model} not found in config, defaulting to {model_name}")
         
         # Log which AI model is being used
