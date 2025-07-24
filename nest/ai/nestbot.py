@@ -766,7 +766,9 @@ class NestBotPanel:
         
         # Add Markdown formatting support
         try:
-            sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            from nest.utils.platform_paths import PlatformPaths
+            platform_paths = PlatformPaths()
+            sys.path.append(str(platform_paths._get_portable_dir()))
             import markdown_handler
             self = markdown_handler.add_markdown_support(self)
             logging.info("Markdown formatting enabled for NestBot")
@@ -2377,8 +2379,10 @@ Need more help? Just ask!
             
             # Choose the appropriate knowledge file based on ticket access
             if not custom_knowledge_path:
-                # Set base knowledge directory
-                knowledge_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "knowledge")
+                # Set base knowledge directory using platform-appropriate paths
+                from nest.utils.platform_paths import PlatformPaths
+                platform_paths = PlatformPaths()
+                knowledge_dir = platform_paths._get_portable_dir() / "knowledge"
                 
                 # Use different context files based on whether ticket access is enabled
                 if ticket_access or specific_ticket:
