@@ -4,6 +4,7 @@ import os
 import json
 import threading
 import datetime
+import logging
 from tkcalendar import Calendar
 from dateutil.parser import parse
 from PIL import Image, ImageTk
