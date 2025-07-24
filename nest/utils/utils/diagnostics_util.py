@@ -27,8 +27,8 @@ config_path = os.path.join(os.path.dirname(__file__), 'config', 'config.json')
 config = load_config()
 API_KEY = config.get("repairdesk", {}).get("api_key", "")
 
-# Import your custom RepairDesk client (ensure this file exists at utils/api_client.py)
-from utils.api_client import RepairDeskClient
+# Import your custom RepairDesk client (ensure this file exists at nest/utils/api_client.py)
+from nest.utils.api_client import RepairDeskClient
 
 
 def get_all_tickets():

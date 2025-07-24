@@ -1471,8 +1471,8 @@ class RepairDeskAPI:
             return
         
         # Create cache directory if it doesn't exist
-        cache_dir = self.get_cache_directory()
-        os.makedirs(cache_dir, exist_ok=True)
+        from nest.utils.cache_utils import get_cache_directory
+        cache_dir = get_cache_directory()
         
         # Sort tickets by created_date (newest first) and limit to 50 most recent
         try:

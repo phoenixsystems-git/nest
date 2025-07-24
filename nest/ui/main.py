@@ -13,6 +13,7 @@ import subprocess
 import logging
 import platform
 import importlib
+import time
 from functools import partial
 from typing import Dict, List, Tuple, Callable, Optional, Any
 
@@ -1693,27 +1694,21 @@ def check_dependencies_needed():
     if os.environ.get("DEP_INSTALLED") == "1":
         return False
         
-    # Skip dependency check if we're in a restart loop (more than 3 restarts)
-    restart_count_file = os.path.join(get_script_dir(), '.restart_count')
-    restart_count = 0
-    if os.path.exists(restart_count_file):
-        try:
-            with open(restart_count_file, 'r') as f:
-                restart_count = int(f.read().strip() or '0')
-        except:
-            restart_count = 0
+    # Check if dependency marker file exists and is recent (< 1 day old)
+    try:
+        from nest.utils.platform_paths import PlatformPaths
+        platform_paths = PlatformPaths()
+        config_dir = platform_paths.get_config_dir()
+        platform_paths.ensure_dir_exists(config_dir)
+        dep_marker = config_dir / '.dep_check_passed'
+    except ImportError:
+        dep_marker = os.path.join(get_script_dir(), '.dep_check_passed')
     
-    # If we've restarted more than 3 times, assume dependencies are installed
-    # to break out of any potential infinite loops
-    if restart_count >= 3:
-        logging.warning("Multiple restart attempts detected. Assuming dependencies are installed.")
-        # Set the environment variable to avoid checks on the next run
-        os.environ["DEP_INSTALLED"] = "1"
-        return False
-    
-    # Increment restart count
-    with open(restart_count_file, 'w') as f:
-        f.write(str(restart_count + 1))
+    if os.path.exists(dep_marker):
+        # Check if marker is recent (less than 24 hours old)
+        if time.time() - os.path.getmtime(dep_marker) < 86400:  # 24 hours
+            os.environ["DEP_INSTALLED"] = "1"  # Set env var to avoid future checks
+            return False  # Dependencies recently verified, skip check
     
     # Basic dependencies required for the app to function
     required_packages = {
@@ -1736,12 +1731,6 @@ def check_dependencies_needed():
             'pyudev': 'pyudev'
         })
     
-    # Check if dependency marker file exists and is recent (< 1 day old)
-    dep_marker = os.path.join(get_script_dir(), '.dep_check_passed')
-    if os.path.exists(dep_marker):
-        # Check if marker is recent (less than 24 hours old)
-        if time.time() - os.path.getmtime(dep_marker) < 86400:  # 24 hours
-            return False  # Dependencies recently verified, skip check
     
     # Check essential packages by attempting to import them
     missing_packages = []
@@ -1759,7 +1748,7 @@ def check_dependencies_needed():
     
     if not missing_packages:
         # Create or update dependency marker file
-        with open(dep_marker, 'w') as f:
+        with open(str(dep_marker), 'w') as f:
             f.write(f"Dependencies verified on {time.ctime()}")
         # Set environment variable to avoid repeating checks in this session
         os.environ["DEP_INSTALLED"] = "1"

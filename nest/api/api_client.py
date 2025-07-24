@@ -1,6 +1,6 @@
 import requests
-from utils.logger import log_message
-from utils.config import get_repairdesk_key
+from nest.utils.logger import log_message
+from nest.utils.config import get_repairdesk_key
 
 
 class RepairDeskClient:
@@ -77,8 +77,8 @@ class RepairDeskClient:
             return
         
         # Create cache directory if it doesn't exist
-        cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cache")
-        os.makedirs(cache_dir, exist_ok=True)
+        from nest.utils.cache_utils import get_cache_directory
+        cache_dir = get_cache_directory()
         
         log_message(f"🚀 BATCH PROCESSING: Creating ticket detail files for {len(tickets)} tickets using efficient batch method")
         
@@ -191,8 +191,8 @@ class RepairDeskClient:
                 from datetime import datetime
                 
                 # Create cache directory if it doesn't exist
-                cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cache")
-                os.makedirs(cache_dir, exist_ok=True)
+                from nest.utils.cache_utils import get_cache_directory
+                cache_dir = get_cache_directory()
                 
                 # Create filename using only the ticket_id (without timestamp)
                 display_id = ticket_id
