@@ -20,6 +20,7 @@ import re
 from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 import shutil
+from nest.utils.ui_threading import ThreadSafeUIUpdater
 
 
 class DataRecoveryTab(ttk.Frame):
@@ -1107,7 +1108,7 @@ class DataRecoveryTab(ttk.Frame):
             self.update_status(f"Recovery complete! Files saved to {output_path}", 100)
             
             # Show success message in main thread
-            self.after(0, lambda: messagebox.showinfo(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showinfo(
                 "Recovery Complete",
                 f"Successfully recovered files to {output_path}"
             ))
@@ -1117,13 +1118,13 @@ class DataRecoveryTab(ttk.Frame):
             self.update_status(f"Error: {str(e)}", 0)
             
             # Show error in main thread
-            self.after(0, lambda: messagebox.showerror(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
                 "Recovery Error",
                 f"An error occurred during recovery: {str(e)}"
             ))
         finally:
             # Reset UI state in main thread
-            self.after(0, self.reset_recovery_ui)
+            ThreadSafeUIUpdater.safe_update(self, self.reset_recovery_ui)
     
     def create_sample_recovered_files(self, output_path):
         """Create sample recovered files for demonstration.
@@ -1206,9 +1207,8 @@ class DataRecoveryTab(ttk.Frame):
             message: Status message to display
             progress: Progress value (0-100)
         """
-        # Using after() to update from a non-main thread
-        self.after(0, lambda: self.status_message.set(message))
-        self.after(0, lambda: self.recovery_progress.set(progress))
+        # Using ThreadSafeUIUpdater to update from a non-main thread
+        ThreadSafeUIUpdater.safe_progress_update(self, self.recovery_progress, self.status_message, progress, message)
     
     def reset_recovery_ui(self):
         """Reset UI after recovery completion or cancellation."""
@@ -1389,7 +1389,7 @@ class DataRecoveryTab(ttk.Frame):
             self.update_imaging_status(f"Imaging complete! Saved to {destination_path}", 100)
             
             # Show success message in main thread
-            self.after(0, lambda: messagebox.showinfo(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showinfo(
                 "Imaging Complete",
                 f"Successfully created disk image at {destination_path}"
             ))
@@ -1402,13 +1402,13 @@ class DataRecoveryTab(ttk.Frame):
             self.update_imaging_status(f"Error: {str(e)}", 0)
             
             # Show error in main thread
-            self.after(0, lambda: messagebox.showerror(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
                 "Imaging Error",
                 f"An error occurred during imaging: {str(e)}"
             ))
         finally:
             # Reset UI state in main thread
-            self.after(0, self.reset_imaging_ui)
+            ThreadSafeUIUpdater.safe_update(self, self.reset_imaging_ui)
     
     def get_drive_size(self, drive_path):
         """Get the size of a drive in bytes.
@@ -1512,9 +1512,8 @@ class DataRecoveryTab(ttk.Frame):
             message: Status message to display
             progress: Progress value (0-100)
         """
-        # Using after() to update from a non-main thread
-        self.after(0, lambda: self.imaging_status.set(message))
-        self.after(0, lambda: self.imaging_progress.set(progress))
+        # Using ThreadSafeUIUpdater to update from a non-main thread
+        ThreadSafeUIUpdater.safe_progress_update(self, self.imaging_progress, self.imaging_status, progress, message)
     
     def reset_imaging_ui(self):
         """Reset UI after imaging completion or cancellation."""

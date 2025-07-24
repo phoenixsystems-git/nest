@@ -17,6 +17,7 @@ from pathlib import Path
 import urllib.request
 from urllib.parse import urljoin
 import webbrowser
+from nest.utils.ui_threading import ThreadSafeUIUpdater
 
 # Import Windows-specific modules only on Windows
 IS_WINDOWS = platform.system().lower() == 'windows'
@@ -435,10 +436,10 @@ class IOSToolsModule(ttk.Frame):
                     self.update_status("3uTools installed")
 
                     # Update the status label
-                    self.after(0, lambda: self.threeu_label.config(text="3uTools: ✅ Installed"))
+                    ThreadSafeUIUpdater.safe_update(self, lambda: self.threeu_label.config(text="3uTools: ✅ Installed"))
 
                     # Refresh the device list to show device info
-                    self.after(0, self.refresh_device_list)
+                    ThreadSafeUIUpdater.safe_update(self, self.refresh_device_list)
                     return
 
             self.log_message("Timed out waiting for installation. Please install manually.")
@@ -524,7 +525,7 @@ class IOSToolsModule(ttk.Frame):
         except Exception as e:
             self.log_message(f"Connection error: {str(e)}")
             self.update_status("Connection failed")
-            self.after(0, lambda: messagebox.showerror(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
                 "Connection Error",
                 f"Could not connect to iOS device: {str(e)}"
             ))
@@ -534,7 +535,7 @@ class IOSToolsModule(ttk.Frame):
         """Connect to iOS device using 3uTools on Windows"""
         if not self.threeutools_installed:
             self.log_message("3uTools is required for iOS device connection")
-            self.after(0, lambda: messagebox.showinfo(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showinfo(
                 "3uTools Required",
                 "3uTools is required to connect to iOS devices. Please install it first."
             ))
@@ -552,7 +553,7 @@ class IOSToolsModule(ttk.Frame):
         device_info = self._get_device_info_from_3utools()
         if not device_info:
             self.log_message("No iOS device detected")
-            self.after(0, lambda: messagebox.showinfo(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showinfo(
                 "No Device Detected",
                 "No iOS device was detected. Please make sure:\n\n"
                 "1. Your iPhone is connected via USB\n"
@@ -573,7 +574,7 @@ class IOSToolsModule(ttk.Frame):
         """Connect to iOS device using libimobiledevice on Linux"""
         if not self.libimobiledevice_installed:
             self.log_message("libimobiledevice is required for iOS device connection")
-            self.after(0, lambda: messagebox.showinfo(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showinfo(
                 "libimobiledevice Required",
                 "libimobiledevice is required to connect to iOS devices. Please install it first."
             ))
@@ -595,7 +596,7 @@ class IOSToolsModule(ttk.Frame):
             if result.returncode != 0:
                 self.log_message(f"Error listing devices: {result.stderr}")
                 self.update_status("Connection failed")
-                self.after(0, lambda: messagebox.showerror(
+                ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
                     "Connection Error",
                     f"Could not list iOS devices: {result.stderr}"
                 ))
@@ -606,7 +607,7 @@ class IOSToolsModule(ttk.Frame):
             
             if not device_ids:
                 self.log_message("No iOS device detected")
-                self.after(0, lambda: messagebox.showinfo(
+                ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showinfo(
                     "No Device Detected",
                     "No iOS device was detected. Please make sure:\n\n"
                     "1. Your iPhone is connected via USB\n"

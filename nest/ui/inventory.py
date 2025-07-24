@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Any
 
 # Import the RepairDesk API client
 from ..utils.repairdesk_api import RepairDeskAPI
+from ..utils.ui_threading import ThreadSafeUIUpdater
 
 logger = logging.getLogger(__name__)
 
@@ -473,8 +474,8 @@ class InventoryModule(ttk.Frame):
             
             # Define the callback function for incremental updates
             def page_callback(page_items, is_complete, total_items, pagination_info):
-                # Schedule UI update on the main thread
-                self.after(0, lambda: self._process_inventory_page(
+                # Schedule UI update on the main thread using thread-safe updater
+                ThreadSafeUIUpdater.safe_update(self, lambda: self._process_inventory_page(
                     page_items, is_complete, total_items, pagination_info, is_cached=not force_refresh
                 ))
                 
@@ -488,7 +489,7 @@ class InventoryModule(ttk.Frame):
             
         except Exception as e:
             logger.error(f"Error loading inventory data: {e}")
-            self.after(0, lambda: self._show_load_error(str(e)))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self._show_load_error(str(e)))
     
     def _process_inventory_data(self, data, is_cached=None):
         """Process the complete inventory data set and update the UI.

@@ -20,6 +20,7 @@ from tkinter import ttk, messagebox, scrolledtext
 from tkinter import filedialog
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+from nest.utils.ui_threading import ThreadSafeUIUpdater
 
 # Import OS-specific diagnostics modules
 if platform.system() == 'Linux':
@@ -383,7 +384,7 @@ class DiagnosticsTab(ttk.Frame):
         
     def _update_hw_progress_status(self, text):
         """Update hardware test progress status text from a background thread."""
-        self.after(0, lambda: self.hw_progress_status.configure(text=text))
+        ThreadSafeUIUpdater.safe_update(self, lambda: self.hw_progress_status.configure(text=text))
         
     def _update_cpu_info(self, cpu_info, system_load):
         """Update the CPU information tab with detailed CPU data."""
@@ -788,7 +789,7 @@ class DiagnosticsTab(ttk.Frame):
             
     def _update_storage_progress_status(self, text):
         """Update storage test progress status text from a background thread."""
-        self.after(0, lambda: self.storage_progress_status.configure(text=text))
+        ThreadSafeUIUpdater.safe_update(self, lambda: self.storage_progress_status.configure(text=text))
         
     def _update_storage_info(self, storage_info, drive_health):
         """Update the Storage information tab with detailed drive data."""
@@ -1116,7 +1117,7 @@ class DiagnosticsTab(ttk.Frame):
             
     def _update_network_progress_status(self, text):
         """Update network test progress status text from a background thread."""
-        self.after(0, lambda: self.network_progress_status.configure(text=text))
+        ThreadSafeUIUpdater.safe_update(self, lambda: self.network_progress_status.configure(text=text))
         
     def _test_connectivity(self):
         """Test connectivity to important destinations."""
@@ -1592,7 +1593,7 @@ class DiagnosticsTab(ttk.Frame):
     
     def _update_progress_status(self, text):
         """Update progress status text from a background thread."""
-        self.after(0, lambda: self.progress_status.configure(text=text))
+        ThreadSafeUIUpdater.safe_update(self, lambda: self.progress_status.configure(text=text))
     
     def _update_ui_with_results(self):
         """Update the UI with diagnostic results."""

@@ -8,6 +8,7 @@ import logging
 from tkcalendar import Calendar
 from dateutil.parser import parse
 from PIL import Image, ImageTk
+from nest.utils.ui_threading import ThreadSafeUIUpdater
 
 # Conditionally import Google Calendar client
 try:
@@ -238,15 +239,15 @@ class AppointmentsModule(ttk.Frame):
                     self.calendar_id = primary['id']
                 
                 # Update UI from the main thread
-                self.after(0, lambda: self._update_connection_status(True))
+                ThreadSafeUIUpdater.safe_update(self, lambda: self._update_connection_status(True))
                 # Load events
-                self.after(0, self._load_events)
+                ThreadSafeUIUpdater.safe_update(self, self._load_events)
             else:
                 # Update UI from the main thread
-                self.after(0, lambda: self._update_connection_status(False))
+                ThreadSafeUIUpdater.safe_update(self, lambda: self._update_connection_status(False))
         except Exception as e:
             error_msg = str(e)
-            self.after(0, lambda: self._handle_connection_error(error_msg))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self._handle_connection_error(error_msg))
     
     def _update_connection_status(self, connected):
         """Update the connection status in the UI"""
@@ -322,13 +323,13 @@ class AppointmentsModule(ttk.Frame):
             self.events = events
             
             # Update UI in the main thread
-            self.after(0, self._update_events_ui)
+            ThreadSafeUIUpdater.safe_update(self, self._update_events_ui)
         except Exception as e:
             logging.error(f"Error fetching events: {e}")
             error_msg = str(e)
-            self.after(0, lambda: self._handle_loading_error(error_msg))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self._handle_loading_error(error_msg))
         finally:
-            self.after(0, lambda: setattr(self, 'loading', False))
+            ThreadSafeUIUpdater.safe_update(self, lambda: setattr(self, 'loading', False))
     
     def _update_events_ui(self):
         """Update the events UI with loaded events"""

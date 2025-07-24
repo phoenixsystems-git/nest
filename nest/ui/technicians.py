@@ -4,6 +4,7 @@ import threading
 import logging
 from nest.utils.config_util import load_config
 from nest.utils.api_client import RepairDeskClient
+from nest.utils.ui_threading import ThreadSafeUIUpdater
 
 
 class TechniciansModule(ttk.Frame):
@@ -190,15 +191,15 @@ class TechniciansModule(ttk.Frame):
                 employees = self.client.get_employees() if self.client else None
                 if employees:
                     self.technicians = employees
-                    self.after(0, self._update_technicians_list)
+                    ThreadSafeUIUpdater.safe_update(self, self._update_technicians_list)
                 else:
-                    self.after(0, lambda: self.status_var.set("No technicians found"))
-                    self.after(0, self._show_sample_data)
+                    ThreadSafeUIUpdater.safe_update(self, lambda: self.status_var.set("No technicians found"))
+                    ThreadSafeUIUpdater.safe_update(self, self._show_sample_data)
             except Exception as e:
                 logging.error(f"Failed to load technicians: {e}")
                 error_msg = str(e)
-                self.after(0, lambda: self.status_var.set(f"Error: {error_msg}"))
-                self.after(0, self._show_sample_data)
+                ThreadSafeUIUpdater.safe_update(self, lambda: self.status_var.set(f"Error: {error_msg}"))
+                ThreadSafeUIUpdater.safe_update(self, self._show_sample_data)
             finally:
                 self.loading = False
         

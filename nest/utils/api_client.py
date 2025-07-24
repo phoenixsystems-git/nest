@@ -37,7 +37,7 @@ def retry_with_backoff(max_retries=MAX_RETRIES, initial_delay=RETRY_DELAY):
                         if isinstance(e, (requests.exceptions.Timeout, requests.exceptions.ConnectionError)):
                             time.sleep(delay)
                             retries += 1
-                            delay *= 1.5  # Reduced multiplier from 2 to 1.5
+                            delay *= 1.2  # Further reduced multiplier for faster retries
                         else:
                             break
                     else:

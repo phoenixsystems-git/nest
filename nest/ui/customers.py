@@ -8,6 +8,7 @@ from nest.utils.config_util import load_config
 import logging
 from nest.utils.repairdesk_api import RepairDeskAPI
 from nest.utils.pin_secure_cache import PinSecureCache
+from nest.utils.ui_threading import ThreadSafeUIUpdater
 from ..main import FixedHeaderTreeview  # Import the custom Treeview with fixed header
 
 # Cache configuration
@@ -470,7 +471,7 @@ class CustomersModule(ttk.Frame):
         # Get employee PIN for secure cache access
         pin = get_employee_pin()
         if not pin:
-            self.after(0, lambda: messagebox.showinfo(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showinfo(
                 "Security Notice", 
                 "PIN required to securely cache customer data. Proceeding with fetch only."
             ))
@@ -496,12 +497,12 @@ class CustomersModule(ttk.Frame):
                 success, cached_data, error_msg = pin_cache.load(pin, CACHE_FILE, username=username)
                 if success and cached_data:
                     self.customer_data = cached_data
-                    self.after(0, self.refresh_tree)
-                    self.after(0, lambda: self.status.config(text=f"Loaded {len(self.customer_data)} cached customers"))
+                    ThreadSafeUIUpdater.safe_update(self, self.refresh_tree)
+                    ThreadSafeUIUpdater.safe_update(self, lambda: self.status.config(text=f"Loaded {len(self.customer_data)} cached customers"))
                     logging.info(f"Using {len(self.customer_data)} customers from PIN-protected cache")
                 elif error_msg and ("locked" in error_msg.lower() or "rate limit" in error_msg.lower()):
                     # Show security alert if account is locked or rate limited
-                    self.after(0, lambda msg=error_msg: messagebox.showerror("Security Alert", msg))
+                    ThreadSafeUIUpdater.safe_update(self, lambda msg=error_msg: messagebox.showerror("Security Alert", msg))
                     return
             
             # Clear existing data for fresh fetch if no cache or no PIN
@@ -549,7 +550,7 @@ class CustomersModule(ttk.Frame):
                     break  # Exit the fetch loop if module has been destroyed
                     
                 # Update UI with progress
-                self.after(0, self.refresh_tree)
+                ThreadSafeUIUpdater.safe_update(self, self.refresh_tree)
                 
                 # Add safe status update with error handling
                 def safe_status_update(p):
@@ -564,7 +565,7 @@ class CustomersModule(ttk.Frame):
                     except (tk.TclError, RuntimeError, AttributeError) as e:
                         print(f"[DEBUG] Error updating status label: {e}")
                 
-                self.after(0, lambda p=page: safe_status_update(p))
+                ThreadSafeUIUpdater.safe_update(self, lambda p=page: safe_status_update(p))
                 
                 # Incremental cache update - save every 5 pages or 100+ new customers
                 new_customers = len(self.customer_data) - customer_count_at_last_save
@@ -578,7 +579,7 @@ class CustomersModule(ttk.Frame):
                             logging.info(f"Incremental PIN-protected cache update #{cache_updates}: Saved {len(self.customer_data)} customers")
                         elif error_msg and ("locked" in error_msg.lower() or "rate limit" in error_msg.lower()):
                             # Show security alert if account is locked or rate limited
-                            self.after(0, lambda msg=error_msg: messagebox.showerror("Security Alert", msg))
+                            ThreadSafeUIUpdater.safe_update(self, lambda msg=error_msg: messagebox.showerror("Security Alert", msg))
                             break
                     
                 page += 1
@@ -603,4 +604,4 @@ class CustomersModule(ttk.Frame):
             logging.error(f"Customer fetch error: {e}")
             # Only show error message if module is not destroyed
             if not hasattr(self, '_is_destroyed') or not self._is_destroyed:
-                self.after(0, lambda msg=error_message: messagebox.showerror("Error", msg))
+                ThreadSafeUIUpdater.safe_update(self, lambda msg=error_message: messagebox.showerror("Error", msg))

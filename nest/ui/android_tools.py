@@ -17,6 +17,7 @@ from pathlib import Path
 import urllib.request
 from urllib.parse import urljoin
 import webbrowser
+from nest.utils.ui_threading import ThreadSafeUIUpdater
 
 # Check if running on Windows or Linux/Mac
 IS_WINDOWS = platform.system().lower() == 'windows'
@@ -853,7 +854,7 @@ class AndroidToolsModule(ttk.Frame):
                 self.log_message(f"Failed to clean up temporary files: {str(e)}")
             
             # Update UI to reflect successful installation
-            self.after(0, lambda: self.tools_label.configure(text="Android Platform Tools: ✅ Installed"))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.tools_label.configure(text="Android Platform Tools: ✅ Installed"))
             self.platform_tools_installed = True
             
             # Show success message with PATH instructions
@@ -935,8 +936,8 @@ class AndroidToolsModule(ttk.Frame):
             
             if self.device_info:
                 self.device_connected = True
-                self.after(0, self.update_device_info)
-                self.after(0, self.enable_device_actions)
+                ThreadSafeUIUpdater.safe_update(self, self.update_device_info)
+                ThreadSafeUIUpdater.safe_update(self, self.enable_device_actions)
                 self.log_message("Device connected successfully")
                 self.update_status(f"Connected to {self.device_info.get('model', serial)}")
             else:
@@ -1331,7 +1332,7 @@ class AndroidToolsModule(ttk.Frame):
                 adb_cmd = 'adb'
                 
             # Clear the device listbox
-            self.after(0, lambda: self.device_listbox.delete(0, tk.END))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.device_listbox.delete(0, tk.END))
             
             # Run ADB devices command
             result = subprocess.run(
@@ -1387,7 +1388,7 @@ class AndroidToolsModule(ttk.Frame):
                             if model_info:
                                 display_text = f"{model_info} ({device['serial']})"
                         
-                        self.after(0, lambda t=display_text: self.device_listbox.insert(tk.END, t))
+                        ThreadSafeUIUpdater.safe_update(self, lambda t=display_text: self.device_listbox.insert(tk.END, t))
                     
                     self.log_message(f"Found {len(devices)} connected device(s)")
                     self.update_status(f"{len(devices)} device(s) found")
@@ -1537,7 +1538,7 @@ class AndroidToolsModule(ttk.Frame):
             self.update_status("Screenshot saved")
             
             # Show the screenshot in a new window
-            self.after(0, lambda: self._show_screenshot(screenshot_file))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self._show_screenshot(screenshot_file))
             
         except Exception as e:
             self.log_message(f"Error taking screenshot: {str(e)}")
@@ -1847,7 +1848,7 @@ class AndroidToolsModule(ttk.Frame):
             self.update_status("Backup in progress...")
             
             # Show notification to user
-            self.after(0, lambda: messagebox.showinfo(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showinfo(
                 "Backup Started",
                 "The backup process has started. You may need to unlock your device and confirm the backup.\n\n"
                 "Please DO NOT disconnect your device until the backup is complete."
@@ -2508,7 +2509,7 @@ class AndroidToolsModule(ttk.Frame):
             self.fm_status.set("Upload complete")
             
             # Refresh the Android files list
-            self.after(0, lambda: self._refresh_android_files(tree))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self._refresh_android_files(tree))
             
         except Exception as e:
             self.log_message(f"Error during upload: {str(e)}")
@@ -2593,7 +2594,7 @@ class AndroidToolsModule(ttk.Frame):
             self.fm_status.set("Download complete")
             
             # Refresh the local files list
-            self.after(0, lambda: self._refresh_local_files(tree))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self._refresh_local_files(tree))
             
         except Exception as e:
             self.log_message(f"Error during download: {str(e)}")

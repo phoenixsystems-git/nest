@@ -20,6 +20,7 @@ from typing import Dict, List, Optional, Any, Tuple, Callable
 from ..utils.config import get_config, load_config
 from ..api.api_client import RepairDeskClient
 from ..utils.cache_utils import get_ticket_cache_path
+from ..utils.ui_threading import ThreadSafeUIUpdater
 
 
 from ..ui.widgets import HoverButton, ScrollableFrame, ToolTip
@@ -662,7 +663,7 @@ class TicketsModule(ttk.Frame):
                     log_message(f"Error processing ticket: {e}")
                     
             # Update the UI on the main thread
-            self.after(0, lambda: self.update_ticket_table())
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.update_ticket_table())
             
             # Schedule the next refresh if this is a periodic refresh
             if is_refresh:
@@ -670,7 +671,7 @@ class TicketsModule(ttk.Frame):
                 
         except Exception as e:
             log_message(f"Error loading tickets: {e}")
-            self.after(0, lambda: self.status_label.config(text=f"Error loading tickets: {str(e)}"))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text=f"Error loading tickets: {str(e)}"))
             
             # Even if we fail, schedule another refresh
             if is_refresh:
@@ -678,7 +679,7 @@ class TicketsModule(ttk.Frame):
 
         except Exception as e:
             log_message(f"Error loading tickets: {e}")
-            self.after(0, lambda: self.status_label.config(text=f"Error loading tickets: {str(e)}"))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text=f"Error loading tickets: {str(e)}"))
 
             # Even if we fail, schedule another refresh
             return
@@ -907,7 +908,7 @@ class TicketsModule(ttk.Frame):
             api_client = RepairDeskClient()
             
             # Update status
-            self.after(0, lambda: self.status_label.config(text="Fetching detailed ticket information..."))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text="Fetching detailed ticket information..."))
             
             # Fetch detailed ticket data using the actual API ID if found
             detailed_ticket = api_client.get_ticket_by_id(ticket_id, actual_api_id)
@@ -915,15 +916,15 @@ class TicketsModule(ttk.Frame):
             if not detailed_ticket or not isinstance(detailed_ticket, dict):
                 log_message(f"Failed to fetch detailed ticket info for {ticket_id}")
                 # Update status in main thread
-                self.after(0, lambda: self.status_label.config(text="Failed to fetch ticket details"))
+                ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text="Failed to fetch ticket details"))
                 return
                 
             # Process and display ticket in the main thread
-            self.after(0, lambda: self._update_with_detailed_info(detailed_ticket, ticket_id))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self._update_with_detailed_info(detailed_ticket, ticket_id))
             
         except Exception as e:
             log_message(f"Error fetching detailed ticket info: {e}")
-            self.after(0, lambda: self.status_label.config(text=f"Error fetching ticket details: {str(e)[:50]}"))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text=f"Error fetching ticket details: {str(e)[:50]}"))
         
     def _update_with_detailed_info(self, detailed_ticket, ticket_id):
         """Update the UI with detailed ticket information.
@@ -1566,7 +1567,7 @@ class TicketsModule(ttk.Frame):
             detailed_ticket = api_client.get_ticket_by_id(ticket_id, actual_api_id=api_ticket_id)
             
             if not detailed_ticket or not isinstance(detailed_ticket, dict):
-                self.after(0, lambda: messagebox.showerror(
+                ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
                     "Error", f"Failed to fetch detailed ticket info for {ticket_id}"
                 ))
                 return
@@ -1590,15 +1591,15 @@ class TicketsModule(ttk.Frame):
                 selected_ticket["detailed_data"] = detailed_ticket
                 
                 # Show the details window in the main thread
-                self.after(0, lambda: self.show_ticket_details(ticket_id))
+                ThreadSafeUIUpdater.safe_update(self, lambda: self.show_ticket_details(ticket_id))
             else:
-                self.after(0, lambda: messagebox.showerror(
+                ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
                     "Error", f"Ticket {ticket_id} not found in local data"
                 ))
                 
         except Exception as e:
             log_message(f"Error fetching and showing ticket details: {e}")
-            self.after(0, lambda: messagebox.showerror(
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
                 "Error", f"Failed to load ticket details: {str(e)[:100]}"
             ))
         
