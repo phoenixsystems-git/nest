@@ -17,6 +17,7 @@ import copy
 
 # Import RepairDesk API client
 from ..utils.repairdesk_api import RepairDeskAPI
+from nest.main import FixedHeaderTreeview
 
 # Local imports
 try:
@@ -1855,7 +1856,7 @@ Expires after {self.cache_expiration} minutes"""
             
             # Create table
             columns = ('Category', 'Current Stock', 'Reorder Level', 'Urgency')
-            low_stock_tree = ttk.Treeview(low_stock_frame, columns=columns, show='headings')
+            low_stock_tree = FixedHeaderTreeview(low_stock_frame, columns=columns, show='headings')
             
             # Configure columns
             for col in columns:

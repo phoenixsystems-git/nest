@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Any
 # Import the RepairDesk API client
 from ..utils.repairdesk_api import RepairDeskAPI
 from ..utils.ui_threading import ThreadSafeUIUpdater
+from nest.main import FixedHeaderTreeview
 
 logger = logging.getLogger(__name__)
 
@@ -215,7 +216,7 @@ class InventoryModule(ttk.Frame):
         
         # Configure columns
         columns = ("id", "name", "quantity", "price", "category")
-        self.inventory_tree = ttk.Treeview(
+        self.inventory_tree = FixedHeaderTreeview(
             table_frame, 
             columns=columns,
             yscrollcommand=tree_scroll_y.set,
@@ -489,7 +490,8 @@ class InventoryModule(ttk.Frame):
             
         except Exception as e:
             logger.error(f"Error loading inventory data: {e}")
-            ThreadSafeUIUpdater.safe_update(self, lambda: self._show_load_error(str(e)))
+            error_msg = str(e)
+            ThreadSafeUIUpdater.safe_update(self, lambda: self._show_load_error(error_msg))
     
     def _process_inventory_data(self, data, is_cached=None):
         """Process the complete inventory data set and update the UI.

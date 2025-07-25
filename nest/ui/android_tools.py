@@ -18,6 +18,7 @@ import urllib.request
 from urllib.parse import urljoin
 import webbrowser
 from nest.utils.ui_threading import ThreadSafeUIUpdater
+from nest.main import FixedHeaderTreeview
 
 # Check if running on Windows or Linux/Mac
 IS_WINDOWS = platform.system().lower() == 'windows'
@@ -2061,7 +2062,7 @@ class AndroidToolsModule(ttk.Frame):
         local_scrollbar.pack(side="right", fill="y")
         
         # File tree
-        local_files_tree = ttk.Treeview(
+        local_files_tree = FixedHeaderTreeview(
             local_files_frame,
             columns=("size", "date"),
             yscrollcommand=local_scrollbar.set
@@ -2158,7 +2159,7 @@ class AndroidToolsModule(ttk.Frame):
         android_scrollbar.pack(side="right", fill="y")
         
         # File tree
-        android_files_tree = ttk.Treeview(
+        android_files_tree = FixedHeaderTreeview(
             android_files_frame,
             columns=("size", "date"),
             yscrollcommand=android_scrollbar.set
@@ -5543,7 +5544,7 @@ class AndroidToolsModule(ttk.Frame):
                 tree_scroll_x.pack(side="bottom", fill="x")
                 
                 columns = ("package", "path")
-                tree = ttk.Treeview(
+                tree = FixedHeaderTreeview(
                     tree_frame, 
                     columns=columns, 
                     show="headings",
@@ -7618,7 +7619,7 @@ class AndroidToolsModule(ttk.Frame):
             
             # Create the treeview
             columns = ("service", "package", "pid", "uid", "foreground", "started")
-            tree = ttk.Treeview(
+            tree = FixedHeaderTreeview(
                 tree_frame, 
                 columns=columns, 
                 show="headings",
@@ -10872,7 +10873,7 @@ class AndroidToolsModule(ttk.Frame):
         
         # Task list treeview
         columns = ("id", "name", "type", "schedule", "next_run", "last_run", "status")
-        tree = ttk.Treeview(view_frame, columns=columns, show="headings", selectmode="browse")
+        tree = FixedHeaderTreeview(view_frame, columns=columns, show="headings", selectmode="browse")
         
         # Define column headings
         tree.heading("id", text="ID")
@@ -11243,7 +11244,7 @@ Scheduled: {scheduled_time.strftime('%Y-%m-%d %H:%M')}
         
         # History treeview
         history_columns = ("timestamp", "task_name", "task_type", "status", "details")
-        history_tree = ttk.Treeview(history_frame, columns=history_columns, show="headings", selectmode="browse")
+        history_tree = FixedHeaderTreeview(history_frame, columns=history_columns, show="headings", selectmode="browse")
         
         # Define column headings
         history_tree.heading("timestamp", text="Timestamp")

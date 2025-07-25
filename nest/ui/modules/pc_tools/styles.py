@@ -9,6 +9,7 @@ including colors, fonts, and component-specific styles.
 import tkinter as tk
 from tkinter import ttk
 from typing import Dict, Any
+from nest.main import FixedHeaderTreeview
 
 # RepairDesk brand colors
 COLORS = {
@@ -193,21 +194,6 @@ class PCToolsStyles:
                           background=self.colors["danger"],
                           thickness=15)
         
-        # Treeview styles
-        self.style.configure("Treeview",
-                          background=self.colors["card_bg"],
-                          foreground=self.colors["text_primary"],
-                          rowheight=25,
-                          fieldbackground=self.colors["card_bg"])
-        
-        self.style.configure("Treeview.Heading",
-                          background=self.colors["primary"],
-                          foreground="white",
-                          font=self.fonts["normal"])
-        
-        self.style.map("Treeview",
-                     background=[("selected", self.colors["primary"])],
-                     foreground=[("selected", "white")])
         
         # LabelFrame style
         self.style.configure("TLabelframe",
@@ -297,7 +283,7 @@ if __name__ == "__main__":
     tree_frame = ttk.LabelFrame(frame, text="Treeview")
     tree_frame.pack(fill="both", expand=True, pady=10, padx=10)
     
-    tree = ttk.Treeview(tree_frame, columns=("Name", "Value"), show="headings")
+    tree = FixedHeaderTreeview(tree_frame, columns=("Name", "Value"), show="headings")
     tree.heading("Name", text="Name")
     tree.heading("Value", text="Value")
     tree.pack(fill="both", expand=True)

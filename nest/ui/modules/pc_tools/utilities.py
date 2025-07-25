@@ -23,6 +23,7 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from typing import Dict, Any, List, Optional, Union
+from nest.main import FixedHeaderTreeview
 
 # Try to import optional dependencies
 try:
@@ -179,7 +180,7 @@ class UtilitiesTab(ttk.Frame):
         
         # Create a treeview for storage devices
         columns = ("device", "mountpoint", "size", "used", "free", "fstype")
-        self.drives_tree = ttk.Treeview(storage_frame, columns=columns, show="headings", height=6)
+        self.drives_tree = FixedHeaderTreeview(storage_frame, columns=columns, show="headings", height=6)
         
         # Define column headings
         self.drives_tree.heading("device", text="Device")
@@ -275,7 +276,7 @@ class UtilitiesTab(ttk.Frame):
         
         # Create a treeview for kernel modules/drivers
         columns = ("module", "size", "used_by", "status")
-        self.driver_tree = ttk.Treeview(driver_frame, columns=columns, show="headings", height=5)
+        self.driver_tree = FixedHeaderTreeview(driver_frame, columns=columns, show="headings", height=5)
         
         # Define column headings
         self.driver_tree.heading("module", text="Module Name")

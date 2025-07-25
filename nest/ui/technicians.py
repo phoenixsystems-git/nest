@@ -5,6 +5,7 @@ import logging
 from nest.utils.config_util import load_config
 from nest.utils.api_client import RepairDeskClient
 from nest.utils.ui_threading import ThreadSafeUIUpdater
+from nest.main import FixedHeaderTreeview
 
 
 class TechniciansModule(ttk.Frame):
@@ -65,19 +66,6 @@ class TechniciansModule(ttk.Frame):
                        foreground="white", 
                        font=("Segoe UI", 9),
                        padding=(8, 4))
-        style.configure("RepairDesk.Treeview", 
-                       background="white",
-                       foreground=self.colors["text_primary"],
-                       rowheight=30,
-                       fieldbackground="white",
-                       borderwidth=1,
-                       relief="solid")
-        style.configure("RepairDesk.Treeview.Heading", 
-                       background="#E6E6E6",
-                       foreground="#333333",
-                       font=("Segoe UI", 10, "bold"),
-                       relief="raised",
-                       borderwidth=1)
     
     def create_widgets(self):
         """Create the technicians UI"""
@@ -122,8 +110,7 @@ class TechniciansModule(ttk.Frame):
         tree_frame.pack(fill="both", expand=True)
         
         columns = ("name", "email", "role", "status", "tickets")
-        self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings", 
-                                style="RepairDesk.Treeview")
+        self.tree = FixedHeaderTreeview(tree_frame, columns=columns, show="headings")
         
         self.tree.heading("name", text="Name")
         self.tree.heading("email", text="Email")
