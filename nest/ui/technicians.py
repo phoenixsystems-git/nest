@@ -39,6 +39,7 @@ class TechniciansModule(ttk.Frame):
         self._setup_styles()
         self.create_widgets()
         self._load_technicians()
+        self.setup_nestbot_integration()
     
     def _setup_styles(self):
         """Configure RepairDesk styling"""
@@ -136,6 +137,13 @@ class TechniciansModule(ttk.Frame):
         tree_frame.grid_columnconfigure(0, weight=1)
         
         self.tree.bind("<<TreeviewSelect>>", self._on_technician_select)
+    
+    def setup_nestbot_integration(self):
+        """Connect this module's ticket selections to NestBot"""
+        if hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'tree'):
+            handler = self.app._create_nestbot_ticket_handler(self.__class__.__name__)
+            self.tree.bind('<<TreeviewSelect>>', handler)
+            logging.debug(f"NestBot integration enabled for {self.__class__.__name__}")
     
     def _create_details_panel(self, parent):
         """Create technician details panel"""

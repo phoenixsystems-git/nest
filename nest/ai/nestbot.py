@@ -418,22 +418,39 @@ class NestBotPanel:
             
             # Create a wrapper function to capture ticket selection
             def ticket_selection_wrapper(*args, **kwargs):
+                """Enhanced wrapper for ticket selection that provides richer context"""
                 # Call the original handler first
                 result = original_handler(*args, **kwargs)
                 
                 # Get the selected ticket ID
                 selected_ticket = getattr(self.app, 'selected_ticket', None)
                 if selected_ticket:
-                    # Update NestBot's context with the selected ticket
-                    self.specific_ticket_var.set(selected_ticket.get('id', ''))
+                    ticket_id = selected_ticket.get('id', '')
+                    # Store for AI context
+                    self.detected_ticket_for_context = ticket_id
+                    self.specific_ticket_var.set(ticket_id)
                     
-                    # Preload ticket data if ticket access is enabled
-                    if self.access_tickets_var.get():
-                        threading.Thread(
-                            target=self.preload_ticket_data,
-                            args=(selected_ticket.get('id', '')),
-                            daemon=True
-                        ).start()
+                    # Preload ticket data for faster AI responses
+                    try:
+                        if hasattr(self, 'ticket_db') and 'get_ticket' in self.ticket_db:
+                            ticket_data = self.ticket_db['get_ticket'](ticket_id)
+                            if ticket_data:
+                                # Cache the ticket data for immediate AI access
+                                if not hasattr(self, 'recent_tickets'):
+                                    self.recent_tickets = {}
+                                self.recent_tickets[ticket_id] = {
+                                    'data': ticket_data,
+                                    'loaded_at': time.time(),
+                                    'comments': self.ticket_db.get('get_comments', lambda x: [])(ticket_id),
+                                    'timeline': self.ticket_db.get('get_ticket_timeline', lambda x: [])(ticket_id)
+                                }
+                                logging.info(f"Preloaded ticket {ticket_id} for NestBot context")
+                                
+                                # Display context update in AI chat if UI is available
+                                if hasattr(self, 'display_ai_message') and callable(self.display_ai_message):
+                                    self.display_ai_message("System", f"📋 Ticket {ticket_id} loaded for context. Ask me anything about this ticket!")
+                    except Exception as e:
+                        logging.error(f"Error preloading ticket {ticket_id}: {e}")
                 
                 return result
             

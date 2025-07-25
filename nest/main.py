@@ -1629,6 +1629,46 @@ Your session was locked due to inactivity""",
         # Create the NestBot panel instance and integrate with the main app
         self.nestbot = NestBotPanel(self.ai_panel, self)
         self.nestbot.integrate_with_app()
+        
+        self._setup_cross_module_nestbot_integration()
+        
+        logging.info("NestBot AI panel setup complete with enhanced integration")
+    
+    def _setup_cross_module_nestbot_integration(self):
+        """Set up NestBot integration hooks across all modules"""
+        self.nestbot_instance = self.nestbot
+        
+        # Set up ticket selection event binding for future modules
+        self._nestbot_ticket_handlers = []
+        
+        def create_ticket_selection_handler(module_name):
+            def on_ticket_select(event):
+                try:
+                    selection = event.widget.selection()
+                    if selection:
+                        item = event.widget.item(selection[0])
+                        values = item.get('values', [])
+                        if values:
+                            ticket_id = str(values[0]).strip()  # First column assumed to be ticket ID
+                            if ticket_id and ticket_id != '':
+                                self.nestbot.detected_ticket_for_context = ticket_id
+                                try:
+                                    if hasattr(self.nestbot, 'ticket_db') and 'get_ticket' in self.nestbot.ticket_db:
+                                        ticket_data = self.nestbot.ticket_db['get_ticket'](ticket_id)
+                                        if ticket_data:
+                                            self.nestbot.recent_tickets[ticket_id] = {
+                                                'data': ticket_data,
+                                                'loaded_at': time.time(),
+                                                'source_module': module_name
+                                            }
+                                            logging.info(f"NestBot context updated with ticket {ticket_id} from {module_name}")
+                                except Exception as e:
+                                    logging.warning(f"Could not preload ticket data for NestBot: {e}")
+                except Exception as e:
+                    logging.error(f"Error in NestBot ticket selection handler: {e}")
+            return on_ticket_select
+        
+        self._create_nestbot_ticket_handler = create_ticket_selection_handler
 
     def create_status_bar(self):
         """Create an enhanced status bar with additional utilities."""
@@ -2309,8 +2349,8 @@ def check_dependencies_needed():
     
     # Basic dependencies required for the app to function
     required_packages = [
-        'tkinter', 'requests', 'Pillow', 'psutil', 'beautifulsoup4',
-        'tkcalendar', 'python-dateutil'
+        'tkinter', 'requests', 'PIL', 'psutil', 'bs4',
+        'tkcalendar', 'dateutil'
     ]
     if platform.system().lower() == 'windows':
         required_packages.extend(['pywin32', 'WMI'])
@@ -2323,9 +2363,18 @@ def check_dependencies_needed():
     
     if not missing_packages:
         # Create or update dependency marker file
-        logging.info(f"Creating dependency marker at: {dep_marker}")
-        with open(str(dep_marker), 'w') as f:
-            f.write(f"Dependencies verified on {time.ctime()}")
+        try:
+            logging.info(f"Creating dependency marker at: {dep_marker}")
+            os.makedirs(os.path.dirname(str(dep_marker)), exist_ok=True)
+            with open(str(dep_marker), 'w') as f:
+                f.write(f"Dependencies verified on {time.ctime()}")
+            logging.info(f"Successfully created dependency marker file")
+            if os.path.exists(dep_marker):
+                logging.info(f"Marker file verified to exist at: {dep_marker}")
+            else:
+                logging.error(f"Marker file creation failed - file does not exist after write")
+        except Exception as e:
+            logging.error(f"Failed to create dependency marker file: {e}")
         # Set environment variable to avoid repeating checks in this session
         os.environ["DEP_INSTALLED"] = "1"
         return False  # All dependencies installed
