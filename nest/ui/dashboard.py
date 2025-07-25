@@ -12,6 +12,7 @@ from tkinter import font as tkfont
 # Local imports
 from ..utils.config import get_config, get_repairdesk_key
 from ..api.api_client import RepairDeskClient
+from ..utils.ui_threading import ThreadSafeUIUpdater
 
 
 
@@ -747,7 +748,7 @@ class DashboardModule(ttk.Frame):
         
         # Schedule the execution on the main thread
         try:
-            self.after(0, execute_when_exists)
+            ThreadSafeUIUpdater.safe_update(self, execute_when_exists)
         except Exception as e:
             # This could happen if the widget is being destroyed
             logging.error(f"Could not schedule UI update: {e}")
@@ -918,7 +919,7 @@ class DashboardModule(ttk.Frame):
                     except Exception as e:
                         log_message(f"Error fetching tickets from API: {e}")
                         error_message = str(e)  # Capture the error message
-                        self.after(0, lambda error=error_message: messagebox.showerror(
+                        ThreadSafeUIUpdater.safe_update(self, lambda error=error_message: messagebox.showerror(
                             "API Error", 
                             f"Could not fetch tickets: {error}"
                         ))
@@ -937,7 +938,7 @@ class DashboardModule(ttk.Frame):
                         
                 except Exception as e:
                     log_message(f"Critical error loading tickets: {e}")
-                    self.after(0, lambda: messagebox.showerror(
+                    ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
                         "Error", 
                         f"Failed to load tickets: {e}"
                     ))
@@ -950,7 +951,7 @@ class DashboardModule(ttk.Frame):
             ]
             
             # Update UI on the main thread
-            self.after(0, self._update_tree)
+            ThreadSafeUIUpdater.safe_update(self, self._update_tree)
             
         finally:
             # Always re-enable the refresh button with error handling for widget destruction
@@ -963,7 +964,7 @@ class DashboardModule(ttk.Frame):
                     # Silently handle widget destruction errors
                     logging.debug(f"Widget access error (normal during module switching): {e}")
             
-            self.after(0, safe_enable_button)
+            ThreadSafeUIUpdater.safe_update(self, safe_enable_button)
             self.loading = False
 
     def _update_tree(self):

@@ -7,7 +7,7 @@ import time
 from nest.utils.config_util import load_config
 import logging
 from nest.utils.repairdesk_api import RepairDeskAPI
-from nest.utils.pin_secure_cache import PinSecureCache
+from nest.utils.ui_threading import ThreadSafeUIUpdater
 from ..main import FixedHeaderTreeview  # Import the custom Treeview with fixed header
 
 # Cache configuration
@@ -17,189 +17,58 @@ from ..utils.cache_utils import get_cache_directory
 CACHE_FILE = os.path.join(get_cache_directory(), "customers.cache")
 CACHE_EXPIRY_HOURS = 24  # Cache expiry time in hours
 
-# Global PIN cache (memory only, never stored to disk)
-_CURRENT_PIN = None
 
-
-def get_employee_pin(parent=None, verify=False, username=None):
-    """
-    Get employee PIN for encrypting/decrypting customer data.
-    If PIN is already cached in memory, returns it; otherwise prompts user.
-    Includes fail2ban-like protection against brute force attempts.
-    
-    Args:
-        parent: Parent widget for dialog (optional)
-        verify: Whether to verify PIN against existing data
-        username: Username for tracking lockout/rate limit (defaults to current login)
-    
-    Returns:
-        PIN string or None if canceled/invalid
-    """
-    global _CURRENT_PIN
-    
-    # If we have a cached PIN in memory, use it
-    if _CURRENT_PIN is not None:
-        return _CURRENT_PIN
-    
-    # Use provided username or load from config
-    if username is None:
-        config = load_config()
-        username = config.get("repairdesk", {}).get("username", "default_user")
-        
-    # Create PIN cache instance for verification
-    pin_cache = PinSecureCache(ttl_hours=CACHE_EXPIRY_HOURS)
-    
-    # Try up to 3 times in case of typos
-    for attempt in range(3):
-        # Prompt for PIN
-        prompt = "Enter your RepairDesk Access PIN to access customer data"
-        if verify:
-            prompt += "\n(This PIN will be used to verify access to cached data)"
-            
-        pin = simpledialog.askstring(
-            "Security Verification",
-            prompt,
-            parent=parent,
-            show="*"  # Show asterisks for PIN input
-        )
-        
-        if not pin:
-            return None
-            
-        # If verification is needed, test the PIN with fail2ban check
-        if verify:
-            is_valid, error_msg = pin_cache.verify_pin(pin, username)
-            if not is_valid:
-                if "locked" in error_msg.lower():
-                    # Account is locked out
-                    messagebox.showerror(
-                        "Account Locked", 
-                        error_msg
-                    )
-                    return None
-                elif "rate limit" in error_msg.lower():
-                    # Rate limited
-                    messagebox.showerror(
-                        "Rate Limited", 
-                        error_msg
-                    )
-                    return None
-                else:
-                    # Just an invalid PIN
-                    messagebox.showerror(
-                        "Invalid PIN", 
-                        "The PIN you entered is not valid for decrypting customer data."
-                    )
-                    # Continue to next attempt
-                    continue
-            
-            # Valid PIN
-            break
-        else:
-            # No verification needed
-            break
-    else:
-        # All attempts failed
-        messagebox.showerror(
-            "Access Denied", 
-            "Too many invalid PIN attempts. Please try again later."
-        )
-        return None
-    
-    # Cache the PIN in memory (never stored to disk)
-    _CURRENT_PIN = pin
-    return pin
 
 
 def save_cache(data):
-    """
-    Save customer data to PIN-protected encrypted cache with a timestamp.
-    Includes fail2ban protection against PIN brute force attempts.
-    """
+    """Save customer data to unencrypted JSON cache with timestamp."""
     try:
-        # Get current user for fail2ban tracking
-        config = load_config()
-        username = config.get("repairdesk", {}).get("username", "default_user")
+        cache_data = {
+            'data': data,
+            'timestamp': time.time(),
+            'count': len(data)
+        }
         
-        # Get employee PIN
-        pin = get_employee_pin(username=username)
-        if not pin:
-            logging.warning("Customer cache save canceled - no PIN provided")
-            return False
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(cache_data, f, indent=2)
         
-        # Create PIN-secure cache instance with configured TTL
-        pin_cache = PinSecureCache(ttl_hours=CACHE_EXPIRY_HOURS)
+        logging.debug(f"Saved {len(data)} customers to cache")
+        logging.info("Customer data cache saved successfully")
+        return True
         
-        # Save data to PIN-encrypted cache file with fail2ban protection
-        success, error_msg = pin_cache.save(pin, CACHE_FILE, data, username=username)
-        
-        if success:
-            logging.debug(f"Securely saved {len(data)} customers with PIN protection")
-            logging.info("Customer data cache securely saved with PIN encryption")
-            return True
-        else:
-            # Display the error to the user if there is a specific security issue
-            if "locked" in error_msg.lower() or "rate limit" in error_msg.lower():
-                messagebox.showerror("Security Alert", error_msg)
-            
-            logging.error(f"Failed to save PIN-protected customer data: {error_msg}")
-            return False
-            
     except Exception as e:
-        logging.error(f"Error saving PIN-protected customer cache: {e}")
+        logging.error(f"Error saving customer cache: {e}")
         return False
 
 
 def load_cache():
-    """
-    Load customer data from PIN-protected encrypted cache if not stale.
-    Includes fail2ban protection against PIN brute force attempts.
-    """
+    """Load customer data from JSON cache if not expired."""
     try:
-        # Get current user for fail2ban tracking
-        config = load_config()
-        username = config.get("repairdesk", {}).get("username", "default_user")
-        
-        # Get employee PIN, verifying against existing data
-        pin = get_employee_pin(verify=True, username=username)
-        if not pin:
-            logging.warning("Customer cache load canceled - no valid PIN provided")
+        if not os.path.exists(CACHE_FILE):
+            logging.debug("No cache file found")
             return []
         
-        # Create PIN-secure cache instance with configured TTL
-        pin_cache = PinSecureCache(ttl_hours=CACHE_EXPIRY_HOURS)
+        with open(CACHE_FILE, 'r') as f:
+            cache_data = json.load(f)
         
-        # Load data from PIN-encrypted cache file with fail2ban protection
-        success, data, error_msg = pin_cache.load(pin, CACHE_FILE, username=username)
+        # Check if cache is expired (24 hours)
+        cache_age = time.time() - cache_data.get('timestamp', 0)
+        max_age = CACHE_EXPIRY_HOURS * 3600  # Convert hours to seconds
         
-        if success and data:
-            logging.debug(f"Loaded {len(data)} customers from PIN-protected cache")
-            logging.info("Customer data loaded from PIN-protected secure cache")
-            return data
-        else:
-            if error_msg:
-                # Display the error to the user if there is a specific security issue
-                if "locked" in error_msg.lower() or "rate limit" in error_msg.lower():
-                    messagebox.showerror("Security Alert", error_msg)
-                logging.warning(f"Failed to load cache: {error_msg}")
-            else:
-                logging.debug("No valid PIN-protected cache found or cache is expired")
-            
+        if cache_age > max_age:
+            logging.debug(f"Cache expired ({cache_age/3600:.1f} hours old)")
+            return []
+        
+        data = cache_data.get('data', [])
+        logging.debug(f"Loaded {len(data)} customers from cache")
+        logging.info("Customer data loaded from cache")
+        return data
+        
     except Exception as e:
-        logging.error(f"Error loading PIN-protected customer cache: {e}")
-        
-    return []  # Return empty list if cache loading fails
+        logging.error(f"Error loading customer cache: {e}")
+        return []
 
 
-def clear_pin_from_memory():
-    """
-    Clear the cached PIN from memory for security.
-    Call this when application exits or user logs out.
-    """
-    global _CURRENT_PIN
-    _CURRENT_PIN = None
-    logging.debug("Cleared PIN from memory")
-    return True
 
 
 def fetch_customers_page(page):
@@ -467,45 +336,24 @@ class CustomersModule(ttk.Frame):
         # Create the API client instance
         api_client = RepairDeskAPI()
         
-        # Get employee PIN for secure cache access
-        pin = get_employee_pin()
-        if not pin:
-            self.after(0, lambda: messagebox.showinfo(
-                "Security Notice", 
-                "PIN required to securely cache customer data. Proceeding with fetch only."
-            ))
-            
-        # Get current user for fail2ban tracking
-        config = load_config()
-        username = config.get("repairdesk", {}).get("username", "default_user")
-        
-        # Start a PIN-protected secure cache instance with rate limiting
-        pin_cache = PinSecureCache(ttl_hours=CACHE_EXPIRY_HOURS)
-        
         # Check if API client has valid credentials
         if not api_client.api_key:
-            self.after(
-                0, lambda: messagebox.showerror("Config Error", "RepairDesk API key missing from configuration.")
-            )
+            ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
+                "Config Error", "RepairDesk API key missing from configuration."
+            ))
             return
             
         try:
-            # Try to load data from PIN-protected cache first for faster startup
-            if pin:
-                self.customer_data = []
-                success, cached_data, error_msg = pin_cache.load(pin, CACHE_FILE, username=username)
-                if success and cached_data:
-                    self.customer_data = cached_data
-                    self.after(0, self.refresh_tree)
-                    self.after(0, lambda: self.status.config(text=f"Loaded {len(self.customer_data)} cached customers"))
-                    logging.info(f"Using {len(self.customer_data)} customers from PIN-protected cache")
-                elif error_msg and ("locked" in error_msg.lower() or "rate limit" in error_msg.lower()):
-                    # Show security alert if account is locked or rate limited
-                    self.after(0, lambda msg=error_msg: messagebox.showerror("Security Alert", msg))
-                    return
-            
-            # Clear existing data for fresh fetch if no cache or no PIN
-            if not pin or not hasattr(self, 'customer_data') or not self.customer_data:
+            # Try to load data from cache first for faster startup
+            cached_data = load_cache()
+            if cached_data:
+                self.customer_data = cached_data
+                ThreadSafeUIUpdater.safe_update(self, self.refresh_tree)
+                ThreadSafeUIUpdater.safe_update(self, lambda: self.status.config(
+                    text=f"Loaded {len(self.customer_data)} cached customers"
+                ))
+                logging.info(f"Using {len(self.customer_data)} customers from cache")
+            else:
                 self.customer_data = []
                 
             # Dictionary to track customers by ID for faster duplicate checking
@@ -549,7 +397,7 @@ class CustomersModule(ttk.Frame):
                     break  # Exit the fetch loop if module has been destroyed
                     
                 # Update UI with progress
-                self.after(0, self.refresh_tree)
+                ThreadSafeUIUpdater.safe_update(self, self.refresh_tree)
                 
                 # Add safe status update with error handling
                 def safe_status_update(p):
@@ -564,43 +412,33 @@ class CustomersModule(ttk.Frame):
                     except (tk.TclError, RuntimeError, AttributeError) as e:
                         print(f"[DEBUG] Error updating status label: {e}")
                 
-                self.after(0, lambda p=page: safe_status_update(p))
+                ThreadSafeUIUpdater.safe_update(self, lambda p=page: safe_status_update(p))
                 
                 # Incremental cache update - save every 5 pages or 100+ new customers
                 new_customers = len(self.customer_data) - customer_count_at_last_save
                 if page % 5 == 0 or new_customers >= 100:
-                    # Save incremental progress to PIN-encrypted cache with fail2ban protection
-                    if pin:
-                        success, error_msg = pin_cache.save(pin, CACHE_FILE, self.customer_data, username=username)
-                        if success:
-                            cache_updates += 1
-                            customer_count_at_last_save = len(self.customer_data)
-                            logging.info(f"Incremental PIN-protected cache update #{cache_updates}: Saved {len(self.customer_data)} customers")
-                        elif error_msg and ("locked" in error_msg.lower() or "rate limit" in error_msg.lower()):
-                            # Show security alert if account is locked or rate limited
-                            self.after(0, lambda msg=error_msg: messagebox.showerror("Security Alert", msg))
-                            break
+                    # Save incremental progress to cache
+                    if save_cache(self.customer_data):
+                        cache_updates += 1
+                        customer_count_at_last_save = len(self.customer_data)
+                        logging.info(f"Incremental cache update #{cache_updates}: Saved {len(self.customer_data)} customers")
                     
                 page += 1
             
             # Final cache save to ensure we have the most recent data
-            if pin and len(self.customer_data) > customer_count_at_last_save:
-                success, error_msg = pin_cache.save(pin, CACHE_FILE, self.customer_data, username=username)
-                if success:
-                    logging.info(f"Final PIN-protected cache update: Saved {len(self.customer_data)} customers")
-                elif error_msg and ("locked" in error_msg.lower() or "rate limit" in error_msg.lower()):
-                    # Show security alert if account is locked or rate limited
-                    self.after(0, lambda msg=error_msg: messagebox.showerror("Security Alert", msg))
+            if len(self.customer_data) > customer_count_at_last_save:
+                if save_cache(self.customer_data):
+                    logging.info(f"Final cache update: Saved {len(self.customer_data)} customers")
             
             # Update status with completion message, but check if destroyed first
             if not hasattr(self, '_is_destroyed') or not self._is_destroyed:
-                self.after(
-                    0, lambda: self.status.config(text=f"Done: {len(self.customer_data)} customers") if hasattr(self, 'status') and self.status.winfo_exists() else None
-                )
+                ThreadSafeUIUpdater.safe_update(self, lambda: self.status.config(
+                    text=f"Done: {len(self.customer_data)} customers"
+                ) if hasattr(self, 'status') and self.status.winfo_exists() else None)
             
         except Exception as e:
             error_message = f"Failed fetch: {e}"
             logging.error(f"Customer fetch error: {e}")
             # Only show error message if module is not destroyed
             if not hasattr(self, '_is_destroyed') or not self._is_destroyed:
-                self.after(0, lambda msg=error_message: messagebox.showerror("Error", msg))
+                ThreadSafeUIUpdater.safe_update(self, lambda msg=error_message: messagebox.showerror("Error", msg))

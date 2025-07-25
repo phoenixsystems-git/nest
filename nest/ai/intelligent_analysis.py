@@ -465,7 +465,7 @@ class IntelligentAnalysisEngine:
             'experience_drivers': satisfaction_factors
         }
     
-    def generate_intelligent_insights(self, query: str, tickets: List[Dict], context: str = None) -> str:
+    def generate_intelligent_insights(self, query: str, tickets: List[Dict], context: Optional[str] = None) -> str:
         """Generate sophisticated, context-aware insights based on the query and data."""
         query_lower = query.lower()
         
@@ -1331,7 +1331,7 @@ class IntelligentAnalysisEngine:
             if score > 0:
                 category_scores[category] = score
         
-        return max(category_scores, key=category_scores.get) if category_scores else 'general_repair'
+        return max(category_scores.keys(), key=lambda k: category_scores[k]) if category_scores else 'general_repair'
     
     def _calculate_turnaround_time(self, ticket: Dict) -> Optional[float]:
         """Calculate turnaround time in days."""

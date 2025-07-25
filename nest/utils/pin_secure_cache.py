@@ -27,7 +27,7 @@ class PinSecureCache:
     unauthorized access even if cache files are directly accessed.
     """
     
-    def __init__(self, cache_dir: str = None, ttl_hours: int = 24, 
+    def __init__(self, cache_dir: Optional[str] = None, ttl_hours: int = 24, 
                  max_attempts: int = 5, lockout_minutes: int = 15):
         """Initialize the PIN-secure cache.
         
@@ -66,7 +66,7 @@ class PinSecureCache:
             lockout_minutes=lockout_minutes
         )
     
-    def save(self, pin: str, filename: str, data: Any, username: str = "default", ip_addr: str = None) -> Tuple[bool, Optional[str]]:
+    def save(self, pin: str, filename: str, data: Any, username: str = "default", ip_addr: Optional[str] = None) -> Tuple[bool, Optional[str]]:
         """Save data to PIN-protected encrypted cache file.
         
         Args:
@@ -120,7 +120,7 @@ class PinSecureCache:
             self.logger.error(error_msg)
             return False, error_msg
     
-    def load(self, pin: str, filename: str, username: str = "default", ip_addr: str = None) -> Tuple[bool, Any, Optional[str]]:
+    def load(self, pin: str, filename: str, username: str = "default", ip_addr: Optional[str] = None) -> Tuple[bool, Any, Optional[str]]:
         """Load data from PIN-protected encrypted cache file if not expired.
         
         Args:
@@ -187,7 +187,7 @@ class PinSecureCache:
             self.logger.error(error_msg)
             return False, None, error_msg
     
-    def clear(self, filename: str = None) -> bool:
+    def clear(self, filename: Optional[str] = None) -> bool:
         """Clear specific cache file or all cache files.
         
         Args:
@@ -216,7 +216,7 @@ class PinSecureCache:
             self.logger.error(f"Failed to clear PIN-encrypted cache: {e}")
             return False
             
-    def verify_pin(self, pin: str, username: str = "default", ip_addr: str = None) -> Tuple[bool, Optional[str]]:
+    def verify_pin(self, pin: str, username: str = "default", ip_addr: Optional[str] = None) -> Tuple[bool, Optional[str]]:
         """Verify if a PIN is valid for encryption/decryption.
         
         Args:
@@ -253,6 +253,55 @@ class PinSecureCache:
         else:
             error_msg = "Invalid PIN"
             return False, error_msg
+    
+    def validate_pin_fields(self, data):
+        """Validate that PIN-related fields are present and properly formatted with enhanced security."""
+        if not isinstance(data, dict):
+            logging.warning("PIN validation failed: data is not a dictionary")
+            return False
+        
+        pin_fields = ['pin', 'PIN', 'access_pin', 'security_pin', 'user_pin']
+        valid_pin_found = False
+        
+        for field in pin_fields:
+            if field in data:
+                pin_value = data[field]
+                if isinstance(pin_value, (str, int)):
+                    pin_str = str(pin_value).strip()
+                    if pin_str.isdigit() and 4 <= len(pin_str) <= 8:
+                        if not self._is_weak_pin(pin_str):
+                            valid_pin_found = True
+                            break
+                        else:
+                            logging.warning(f"Weak PIN detected in field '{field}'")
+                    else:
+                        logging.warning(f"Invalid PIN format in field '{field}': length or format invalid")
+                else:
+                    logging.warning(f"Invalid PIN type in field '{field}': {type(pin_value)}")
+        
+        if not valid_pin_found:
+            logging.warning("No valid PIN fields found in secure data")
+            return False
+        
+        return True
+    
+    def _is_weak_pin(self, pin_str: str) -> bool:
+        """Check if PIN is weak (sequential numbers, repeated digits, common patterns)."""
+        if len(set(pin_str)) == 1:
+            return True
+        
+        if len(pin_str) >= 4:
+            ascending = all(int(pin_str[i]) == int(pin_str[i-1]) + 1 for i in range(1, len(pin_str)))
+            descending = all(int(pin_str[i]) == int(pin_str[i-1]) - 1 for i in range(1, len(pin_str)))
+            if ascending or descending:
+                return True
+        
+        weak_pins = {'0000', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999',
+                     '1234', '4321', '0123', '3210', '1122', '2211'}
+        if pin_str in weak_pins:
+            return True
+        
+        return False
             
     def secure_test_data(self, test_data: str = "test-data") -> Tuple[bool, Optional[str]]:
         """Test if the PIN-based encryption system is working properly.

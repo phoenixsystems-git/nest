@@ -624,25 +624,49 @@ Expires after {self.cache_expiration} minutes"""
             logging.error(f"Error loading report data: {error_message}")
             self._safe_update_ui(lambda: self.status_var.set(f"Error: {error_message}"))
     def _safe_update_ui(self, callback):
-        """Safely update the UI from a background thread."""
+        """Enhanced thread-safe method to update UI with better error handling."""
         try:
-            # Try using the app's after method
-            if hasattr(self, 'app') and self.app:
-                self.app.after(0, callback)
-            # Fall back to using the widget's after method
-            elif hasattr(self, 'after'):
-                self.after(0, callback)
-            # Last resort - just call directly (not thread-safe but better than crashing)
+            # Use after() to schedule UI updates on the main thread with error handling
+            if hasattr(self, 'root') and self.root and hasattr(self.root, 'after'):
+                self.root.after(0, callback)
+            elif hasattr(self, 'app') and hasattr(self.app, 'root') and self.app.root:
+                # Fallback to app root if available
+                self.app.root.after(0, callback)
             else:
-                logging.warning("Using direct callback - not thread safe")
+                logging.warning("No root window available for thread-safe update, using direct update")
                 callback()
         except Exception as e:
-            logging.error(f"Failed to update UI: {e}")
-            # Try one more time with direct call
+            logging.error(f"Error scheduling UI update: {e}")
+            # Try direct callback as fallback
             try:
                 callback()
             except Exception as e2:
                 logging.error(f"Critical UI update failure: {e2}")
+
+    def _update_progress_safe(self, progress_var, message_var, progress_value, message):
+        """Enhanced thread-safe method to update progress indicators with validation."""
+        try:
+            # Validate inputs before scheduling update
+            if progress_value is not None and not (0 <= progress_value <= 100):
+                logging.warning(f"Invalid progress value: {progress_value}, clamping to valid range")
+                progress_value = max(0, min(100, progress_value))
+            
+            if message is not None and len(str(message)) > 200:
+                message = str(message)[:197] + "..."
+            
+            def update_callback():
+                try:
+                    if progress_var and hasattr(progress_var, 'set') and progress_value is not None:
+                        progress_var.set(progress_value)
+                    if message_var and hasattr(message_var, 'set') and message is not None:
+                        message_var.set(str(message))
+                except Exception as e:
+                    logging.error(f"Error in progress update execution: {e}")
+            
+            self._safe_update_ui(update_callback)
+            
+        except Exception as e:
+            logging.error(f"Error in progress update: {e}")
     
     def display_report(self, report_type, data, from_cache=False):
         """Display the appropriate report based on the report type."""

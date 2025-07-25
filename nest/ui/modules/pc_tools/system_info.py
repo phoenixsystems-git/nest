@@ -20,6 +20,7 @@ from typing import Dict, Any, List, Optional
 from nest.utils.system_utils import get_system_info, register_info_callback, unregister_info_callback
 from nest.utils.snapshot_logger import SnapshotLogger
 from nest.utils.ticket_context import TicketContext
+from nest.utils.ui_threading import ThreadSafeUIUpdater
 
 class SystemInfoTab(ttk.Frame):
     """System Information tab for PC Tools module."""
@@ -499,14 +500,14 @@ class SystemInfoTab(ttk.Frame):
             if cache_valid:
                 # Use cached data
                 logging.info(f"Using cached system information (age: {elapsed_seconds:.1f} seconds)")
-                self.after(0, lambda: self.update_status("Loading cached system information..."))
+                ThreadSafeUIUpdater.safe_update(self, lambda: self.update_status("Loading cached system information..."))
                 system_info = cached_info
                 # Still update UI but skip the API call
-                self.after(0, self._on_system_info_complete)
+                ThreadSafeUIUpdater.safe_update(self, self._on_system_info_complete)
                 return
             
             # Update status while loading fresh data
-            self.after(0, lambda: self.update_status("Loading system information..."))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.update_status("Loading system information..."))
             
             # Register callback for progressive updates
             register_info_callback(self._on_system_info_update)
@@ -520,22 +521,22 @@ class SystemInfoTab(ttk.Frame):
             self.system_info = system_info
             
             # Do an initial UI update with what we have now
-            self.after(0, lambda: self._update_system_info_ui(system_info))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self._update_system_info_ui(system_info))
             
             # Update data source indicator
-            self.after(0, lambda: self.data_source_var.set("Data Source: Local System"))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.data_source_var.set("Data Source: Local System"))
             
             # Store in shared state and broadcast the change
             self.shared_state["system_info"] = system_info
             if hasattr(self.parent, "master") and hasattr(self.parent.master, "update_shared_state"):
-                self.after(0, lambda: self.parent.master.update_shared_state("system_info", system_info))
+                ThreadSafeUIUpdater.safe_update(self, lambda: self.parent.master.update_shared_state("system_info", system_info))
             
             # Update refresh time
             self.last_refresh_time = datetime.datetime.now()
             
             # Log success
             logging.info("System information loading started")
-            self.after(0, lambda: self.update_status("Loading system components..."))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.update_status("Loading system components..."))
             
         except Exception as e:
             logging.error(f"Error loading system info: {e}")

@@ -10,6 +10,7 @@ import re
 import io
 from PIL import Image, ImageTk
 from nest.utils.normalize import normalize_store_name
+from nest.utils.ui_threading import ThreadSafeUIUpdater
 
 
 class LoginFrame(ttk.Frame):
@@ -88,7 +89,7 @@ class LoginFrame(ttk.Frame):
         dots = "." * (count % 4)
         base = self.status_var.get().rstrip(".") or "Loading"
         self.status_var.set(f"{base}{dots}")
-        self.after(500, lambda: self.animate_loading(count + 1))
+        ThreadSafeUIUpdater.safe_update(self, lambda: self.animate_loading(count + 1))
     
     def restrict_pin_input(self, *args):
         """Allow only digits, max 4."""
@@ -377,7 +378,7 @@ class LoginFrame(ttk.Frame):
                 self.handle_login()
                 
         # Wait for employees to load
-        self.after(1500, complete_auto_login)
+        ThreadSafeUIUpdater.safe_update(self, complete_auto_login)
         return True
 
     def verify_compatibility(self):
@@ -499,7 +500,7 @@ class LoginFrame(ttk.Frame):
         # Auto-submit if 4 digits entered
         pin = self.pin_var.get().strip()
         if len(pin) == 4:
-            self.after(100, self.handle_login)
+            ThreadSafeUIUpdater.safe_update(self, self.handle_login)
             
     def is_login_locked(self):
         """Check if login is currently locked."""
@@ -1271,17 +1272,17 @@ class LoginFrame(ttk.Frame):
                 logging.info(f"Successfully fetched {len(employees)} employees from {store_name}")
                     
                 # Update UI on the main thread
-                self.after(0, lambda: self.on_store_connected(True, f"Connected successfully to {store_name}", employees))
+                ThreadSafeUIUpdater.safe_update(self, lambda: self.on_store_connected(True, f"Connected successfully to {store_name}", employees))
                 
             except Exception as e:
                 error_msg = f"Failed to fetch employees: {str(e)}"
                 logging.error(error_msg)
-                self.after(0, lambda: self.on_store_connected(False, error_msg, None))
+                ThreadSafeUIUpdater.safe_update(self, lambda: self.on_store_connected(False, error_msg, None))
             
         except Exception as e:
             error_msg = f"Failed to connect to store: {str(e)}"
             logging.error(error_msg)
-            self.after(0, lambda: self.on_store_connected(False, error_msg, None))
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.on_store_connected(False, error_msg, None))
     
     def on_store_connected(self, success, message, employees=None):
         """Handle store connection result."""

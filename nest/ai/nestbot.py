@@ -2733,40 +2733,6 @@ Need more help? Just ask!
         
         return segments
     
-    def handle_nestbot_enter(self, event=None):
-        """Handle Enter key press in the NestBot input field.
-        
-        Args:
-            event: The event object (unused)
-        """
-        self.send_ai_message()
-        return "break"  # Prevent the default behavior of the Enter key
-    
-    def send_ai_message(self):
-        """Process the user's message and get a response from the AI."""
-        # Get the message from the input field
-        user_message = self.ai_input.get("1.0", "end-1c").strip()
-        
-        # Clear the input field
-        self.ai_input.delete("1.0", "end")
-        
-        # If the message is empty, do nothing
-        if not user_message:
-            return
-        
-        # Display the user's message in the chat
-        self.display_ai_message("You", user_message)
-        
-        # Show a "Thinking..." message
-        self.ai_chat_display.config(state="normal")
-        self.ai_chat_display.insert("end", "\nNestBot: ", "sender")
-        self.ai_chat_display.insert("end", "Thinking...\n", "message")
-        self.ai_chat_display.see("end")
-        self.ai_chat_display.config(state="disabled")
-        
-        # Process the message in a separate thread to keep the UI responsive
-        import threading
-        threading.Thread(target=self.get_ai_response, args=(user_message,), daemon=True).start()
     
     def _load_ticket_data_direct(self, ticket_id):
         """Load ticket data directly from RepairDesk API or cache.
@@ -3501,105 +3467,7 @@ Need more help? Just ask!
             logging.error(f"Error getting ticket last updated: {str(e)}")
             return f"I encountered an error while retrieving ticket update information: {str(e)}"
 
-    def get_ai_response(self, user_message):
-        """Get a response from the AI for the given user message.
-        
-        Args:
-            user_message: The user's message to respond to
-        """
-        try:
-            # Pre-process user message to handle specific queries with real data
-            specific_response = self._handle_specific_queries(user_message)
-            if specific_response:
-                return specific_response
-            
-            # Use intelligent analysis for contextual responses
-            if self.analysis_engine:
-                try:
-                    # Get relevant tickets based on user and query context
-                    relevant_tickets = self._get_relevant_tickets_for_query(user_message)
-                    if relevant_tickets:
-                        contextual_response = self.analysis_engine.generate_intelligent_insights(
-                            user_message, relevant_tickets
-                        )
-                        if contextual_response and len(contextual_response) > 100:
-                            return contextual_response
-                except Exception as e:
-                    logging.error(f"Error in intelligent analysis: {str(e)}")
-            
-            # Import the get_ai_response function from api_client
-            from .api_client import get_ai_response
-            
-            # Get the current user's information
-            current_user = {
-                'id': getattr(self.app, 'current_user_id', None),
-                'name': getattr(self.app, 'current_username', 'User'),
-                'role': getattr(self.app, 'current_user_role', 'User')
-            }
-            
-            # Ticket access is enabled by default for unattended operation
-            ticket_access = True
-            
-            # Extract any ticket numbers mentioned in the message
-            ticket_numbers = self.extract_ticket_numbers(user_message)
-            specific_ticket = ticket_numbers[0] if ticket_numbers else None
-            
-            # Ensure conversation history and ai_chat_display are initialized
-            if not hasattr(self, 'conversation_history'):
-                self.conversation_history = []
-            if not hasattr(self, 'ai_chat_display'):
-                self.ai_chat_display = None  # For headless mode compatibility
-            
-            # Get AI response with proper context
-            response = get_ai_response(
-                user_message=user_message,
-                selected_model=self.current_ai_model if hasattr(self, 'current_ai_model') else None,
-                ticket_access=ticket_access,
-                specific_ticket=specific_ticket,
-                current_user=current_user,
-                conversation_context=self.conversation_history
-            )
-            
-            # Add the exchange to conversation history
-            self.conversation_history.append({
-                'role': 'user',
-                'content': user_message
-            })
-            self.conversation_history.append({
-                'role': 'assistant',
-                'content': response
-            })
-            
-            # Keep conversation history to a reasonable size
-            if len(self.conversation_history) > 10:  # Keep last 5 exchanges
-                self.conversation_history = self.conversation_history[-10:]
-            
-            # Update the UI with the response
-            self.ai_chat_display.after(0, self._update_chat_display, response)
-            
-        except Exception as e:
-            error_msg = f"Error getting AI response: {str(e)}"
-            logging.exception(error_msg)  # Log full traceback
-            self.ai_chat_display.after(0, self._update_chat_display, 
-                "⚠️ **Error:** I'm having trouble connecting to the AI service. Please try again later."
-            )
     
-    def _update_chat_display(self, response):
-        """Update the chat display with the AI's response.
-        
-        Args:
-            response: The AI's response text
-        """
-        self.ai_chat_display.config(state="normal")
-        
-        # Remove the "Thinking..." message
-        self.ai_chat_display.delete("end-2l", "end-1c")
-        
-        # Insert the actual response
-        self.ai_chat_display.insert("end", "NestBot: ", "sender")
-        self.ai_chat_display.insert("end", f"{response}\n", "message")
-        self.ai_chat_display.see("end")
-        self.ai_chat_display.config(state="disabled")
     
     def display_ai_message(self, sender, message):
         """Display an AI message in the chat display with proper formatting.

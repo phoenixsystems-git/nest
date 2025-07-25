@@ -34,7 +34,7 @@ class AccessSecurity:
     """
     
     def __init__(self, 
-                 security_dir: str = None,
+                 security_dir: Optional[str] = None,
                  max_attempts: int = DEFAULT_MAX_ATTEMPTS,
                  lockout_minutes: int = DEFAULT_LOCKOUT_MINUTES,
                  rate_limit_attempts: int = DEFAULT_RATE_LIMIT_ATTEMPTS,
@@ -108,27 +108,50 @@ class AccessSecurity:
                 self._rate_limit = {}
     
     def _save_security_data(self) -> None:
-        """Save security data to file."""
+        """Save security data to file with enhanced security and proper permissions."""
         with self._lock:
             try:
+                # Ensure the directory exists with secure permissions
+                security_dir = os.path.dirname(self.security_file)
+                os.makedirs(security_dir, exist_ok=True)
+                
+                if hasattr(os, 'chmod'):
+                    os.chmod(security_dir, 0o700)
+                
+                temp_file = self.security_file + '.tmp'
+                
                 data = {
                     'failed_attempts': self._failed_attempts,
                     'locked_until': self._locked_until,
                     'rate_limit': self._rate_limit
                 }
                 
-                with open(self.security_file, 'w') as f:
+                with open(temp_file, 'w') as f:
                     json.dump(data, f)
                 
-                # Set secure permissions
-                try:
+                if hasattr(os, 'chmod'):
+                    os.chmod(temp_file, 0o600)
+                
+                if hasattr(os, 'replace'):
+                    os.replace(temp_file, self.security_file)
+                else:
+                    if os.path.exists(self.security_file):
+                        os.remove(self.security_file)
+                    os.rename(temp_file, self.security_file)
+                
+                # Verify final file permissions
+                if hasattr(os, 'chmod'):
                     os.chmod(self.security_file, 0o600)
-                except Exception as e:
-                    self.logger.warning(f"Could not set secure permissions on security file: {e}")
                     
-                self.logger.debug("Saved security data to file")
+                self.logger.debug("Security data saved securely to file")
             except Exception as e:
                 self.logger.error(f"Failed to save security data: {e}")
+                temp_file = self.security_file + '.tmp'
+                if os.path.exists(temp_file):
+                    try:
+                        os.remove(temp_file)
+                    except:
+                        pass
     
     def _cleanup_expired_entries(self) -> None:
         """Remove expired entries from tracking dictionaries."""
@@ -205,7 +228,7 @@ class AccessSecurity:
             
             return False, 0
     
-    def is_rate_limited(self, username: str, ip_addr: str = None) -> Tuple[bool, int]:
+    def is_rate_limited(self, username: str, ip_addr: Optional[str] = None) -> Tuple[bool, int]:
         """
         Check if a user is currently rate limited.
         
@@ -231,7 +254,7 @@ class AccessSecurity:
             else:
                 return False, self.rate_limit_attempts - recent_attempts
     
-    def record_success(self, username: str, ip_addr: str = None) -> None:
+    def record_success(self, username: str, ip_addr: Optional[str] = None) -> None:
         """
         Record a successful authentication.
         
@@ -245,7 +268,7 @@ class AccessSecurity:
                 del self._failed_attempts[username]
                 self._save_security_data()
     
-    def record_attempt(self, username: str, success: bool, ip_addr: str = None) -> Tuple[bool, Optional[float]]:
+    def record_attempt(self, username: str, success: bool, ip_addr: Optional[str] = None) -> Tuple[bool, Optional[float]]:
         """
         Record an authentication attempt and check if account should be locked.
         

@@ -504,15 +504,13 @@ class RepairDeskAPI:
     def get_all_customers(self) -> List[Dict]:
         """Fetch all customers using pagination.
         
-        NOTE: Customer data is handled with PIN-based encryption in the UI layer
-        through PinSecureCache. This method does NOT handle caching directly
-        to maintain security of sensitive data.
+        NOTE: Customer data caching is handled in the UI layer.
+        This method does NOT handle caching directly.
         
         Returns:
             List of customer dictionaries
         """
-        # Customer caching is handled by the PinSecureCache module, not here
-        # This preserves the PIN-based encryption for sensitive customer data
+        # Customer caching is handled by the customers module, not here
         
         self.logger.info("Fetching all customers from RepairDesk (this may take some time)")
         page = 1
@@ -1345,7 +1343,7 @@ class RepairDeskAPI:
     def get_customer_cache_file(self) -> str:
         """Get the full path to the customer cache file.
         NOTE: This method is NOT used for actual customer data caching!
-        Customer data uses PinSecureCache for encryption and is in customers.cache.
+        Customer data caching is handled in the customers module.
         
         Returns:
             str: Path to customer cache file for NON-SENSITIVE data only
@@ -1385,19 +1383,18 @@ class RepairDeskAPI:
             
     def save_customer_cache(self, items: List[Dict]) -> None:
         """IMPORTANT: This method should NOT be used for actual customer data!
-        The application uses PinSecureCache for customer data with encryption.
+        Customer data caching is handled in the customers module.
         
-        This is a placeholder that avoids writing sensitive customer data to disk
-        without proper encryption.
+        This is a placeholder that avoids writing sensitive customer data to disk.
         
         Args:
             items: List of customer items to cache
         """
         # We don't save actual customer data without encryption
         self.logger.warning(
-            "Customer data requires PIN-based encryption! " + 
+            "Customer data caching is handled in the customers module! " + 
             "Not saving to regular cache file. " +
-            "Use PinSecureCache for customer data instead."
+            "Use the customers module for customer data caching."
         )
         
         # Only save non-sensitive fields as a fallback
@@ -1409,7 +1406,7 @@ class RepairDeskAPI:
                     'id': item.get('id', ''),
                     'count': len(items),
                     'timestamp': datetime.now().isoformat(),
-                    'note': 'Only ID is stored - sensitive data requires PinSecureCache'
+                    'note': 'Only ID is stored - sensitive data handled by customers module'
                 }
                 sanitized_items.append(sanitized)
                 

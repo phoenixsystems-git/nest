@@ -7,17 +7,17 @@ from datetime import datetime, timedelta
 from functools import wraps
 from nest.utils.config_util import load_config, ConfigManager
 
-# Cache for API responses with configurable expiry times
+# Unified cache system with consistent expiry times
 RESPONSE_CACHE = {}
-CACHE_EXPIRY = 300  # 5 minutes for general responses
-EMPLOYEE_CACHE_EXPIRY = 3600  # 1 hour for employees (rarely change)
-TICKET_CACHE_EXPIRY = 120  # 2 minutes for tickets (change frequently)
+DEFAULT_CACHE_EXPIRY = 180  # 3 minutes - balanced between freshness and performance
+EMPLOYEE_CACHE_EXPIRY = 1800  # 30 minutes for employees (reduced from 1 hour)
+TICKET_CACHE_EXPIRY = 90  # 1.5 minutes for tickets (reduced from 2 minutes)
 
-# Retry configuration
-MAX_RETRIES = 3
-RETRY_DELAY = 1  # start with 1 second
+# Retry configuration - optimized for better performance
+MAX_RETRIES = 2  # Reduced from 3 to 2 for faster failures
+RETRY_DELAY = 0.5  # Reduced from 1 second to 0.5 seconds
 
-# Helper function for retrying API calls with exponential backoff
+# Helper function for retrying API calls with optimized backoff
 def retry_with_backoff(max_retries=MAX_RETRIES, initial_delay=RETRY_DELAY):
     def decorator(func):
         @wraps(func)
@@ -33,14 +33,22 @@ def retry_with_backoff(max_retries=MAX_RETRIES, initial_delay=RETRY_DELAY):
                     last_exception = e
                     logging.warning(f"API call failed (attempt {retries+1}/{max_retries}): {str(e)}")
                     
-                    # Exponential backoff
-                    time.sleep(delay)
-                    retries += 1
-                    delay *= 2  # Double the delay each time
+                    if retries < max_retries - 1:
+                        if isinstance(e, (requests.exceptions.Timeout, requests.exceptions.ConnectionError)):
+                            time.sleep(delay)
+                            retries += 1
+                            delay *= 1.2  # Further reduced multiplier for faster retries
+                        else:
+                            break
+                    else:
+                        break
             
             # If we get here, all retries failed
             logging.error(f"All {max_retries} API call attempts failed. Last error: {str(last_exception)}")
-            raise last_exception
+            if last_exception:
+                raise last_exception
+            else:
+                raise requests.RequestException("API call failed with unknown error")
         return wrapper
     return decorator
 
@@ -403,7 +411,7 @@ class RepairDeskClient:
         # Check if we have a valid cached response
         if cache_key in RESPONSE_CACHE:
             cache_time, cache_data = RESPONSE_CACHE[cache_key]
-            if datetime.now() - cache_time < timedelta(seconds=CACHE_EXPIRY):
+            if datetime.now() - cache_time < timedelta(seconds=DEFAULT_CACHE_EXPIRY):
                 logging.info(f"[RepairDeskClient] Returning cached ticket details for {ticket_id}")
                 return cache_data
                 
