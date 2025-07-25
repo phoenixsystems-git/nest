@@ -2322,6 +2322,7 @@ def check_dependencies_needed():
     
     if not missing_packages:
         # Create or update dependency marker file
+        logging.info(f"Creating dependency marker at: {dep_marker}")
         with open(str(dep_marker), 'w') as f:
             f.write(f"Dependencies verified on {time.ctime()}")
         # Set environment variable to avoid repeating checks in this session
