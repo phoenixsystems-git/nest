@@ -8,7 +8,7 @@ from nest.utils.config_util import load_config
 import logging
 from nest.utils.repairdesk_api import RepairDeskAPI
 from nest.utils.ui_threading import ThreadSafeUIUpdater
-from ..main import FixedHeaderTreeview  # Import the custom Treeview with fixed header
+from nest.main import FixedHeaderTreeview
 
 # Cache configuration
 from ..utils.cache_utils import get_cache_directory

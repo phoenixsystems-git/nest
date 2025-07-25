@@ -671,7 +671,8 @@ class TicketsModule(ttk.Frame):
                 
         except Exception as e:
             log_message(f"Error loading tickets: {e}")
-            ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text=f"Error loading tickets: {str(e)}"))
+            error_msg = str(e)
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text=f"Error loading tickets: {error_msg}"))
             
             # Even if we fail, schedule another refresh
             if is_refresh:
@@ -679,7 +680,8 @@ class TicketsModule(ttk.Frame):
 
         except Exception as e:
             log_message(f"Error loading tickets: {e}")
-            ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text=f"Error loading tickets: {str(e)}"))
+            error_msg = str(e)
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text=f"Error loading tickets: {error_msg}"))
 
             # Even if we fail, schedule another refresh
             return
@@ -924,7 +926,8 @@ class TicketsModule(ttk.Frame):
             
         except Exception as e:
             log_message(f"Error fetching detailed ticket info: {e}")
-            ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text=f"Error fetching ticket details: {str(e)[:50]}"))
+            error_msg = str(e)[:50]
+            ThreadSafeUIUpdater.safe_update(self, lambda: self.status_label.config(text=f"Error fetching ticket details: {error_msg}"))
         
     def _update_with_detailed_info(self, detailed_ticket, ticket_id):
         """Update the UI with detailed ticket information.
@@ -1599,8 +1602,9 @@ class TicketsModule(ttk.Frame):
                 
         except Exception as e:
             log_message(f"Error fetching and showing ticket details: {e}")
+            error_msg = str(e)[:100]
             ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
-                "Error", f"Failed to load ticket details: {str(e)[:100]}"
+                "Error", f"Failed to load ticket details: {error_msg}"
             ))
         
     def show_update_form(self, ticket, details_window=None):

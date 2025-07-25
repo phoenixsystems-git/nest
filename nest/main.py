@@ -41,7 +41,7 @@ class FixedHeaderTreeview(ttk.Treeview):
         # Create a style for the Treeview
         style = ttk.Style()
         
-        # Configure the Treeview style
+        # Configure the Treeview style with improved padding
         style.configure("Custom.Treeview",
             background="#ffffff",
             foreground="#000000",
@@ -49,17 +49,18 @@ class FixedHeaderTreeview(ttk.Treeview):
             rowheight=35,
             font=("Segoe UI", 10),
             borderwidth=0,
-            relief="flat"
+            relief="flat",
+            padding=(5, 2)
         )
         
-        # Configure the Treeview Heading style with fixed height
+        # Configure the Treeview Heading style with proper RepairDesk green and padding
         style.configure("Custom.Treeview.Heading",
             background="#2e7d32",
             foreground="white",
             relief="flat",
             borderwidth=0,
             font=("Segoe UI", 11, "bold"),
-            padding=(10, 15)
+            padding=(12, 18)
         )
         
         # Layout for the heading to ensure height is respected

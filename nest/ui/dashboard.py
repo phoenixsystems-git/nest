@@ -315,20 +315,6 @@ class DashboardModule(ttk.Frame):
                        borderwidth=1,
                        relief="solid")
                        
-        # Enhanced heading styles with better visibility
-        style.configure("RepairDesk.Treeview.Heading", 
-                       background="#E6E6E6",  # Light gray background
-                       foreground="#333333",    # Dark text
-                       font=("Segoe UI", 10, "bold"),  # Larger bold font
-                       relief="raised",  # Raised effect for better visibility
-                       borderwidth=1)  # Add border
-                       
-        # Add hover effect for headings
-        style.map("RepairDesk.Treeview.Heading",
-                 background=[
-                    ("active", "#D9D9D9"),  # Darker gray when active
-                    ("hover", "#D9D9D9")  # Same on hover
-                 ])
         
         style.map("RepairDesk.Treeview",
                  background=[("selected", LIGHT_GREEN)],
@@ -938,9 +924,10 @@ class DashboardModule(ttk.Frame):
                         
                 except Exception as e:
                     log_message(f"Critical error loading tickets: {e}")
+                    error_msg = str(e)
                     ThreadSafeUIUpdater.safe_update(self, lambda: messagebox.showerror(
                         "Error", 
-                        f"Failed to load tickets: {e}"
+                        f"Failed to load tickets: {error_msg}"
                     ))
             
             # Process tickets for display
