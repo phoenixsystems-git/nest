@@ -9,9 +9,10 @@ from nest.utils.diagnostics_util import upload_diagnostics
 
 
 class DiagnosticsTab(ttk.Frame):
-    def __init__(self, parent, current_user=None):
+    def __init__(self, parent, current_user=None, app=None):
         super().__init__(parent)
         self.current_user = current_user
+        self.app = app
         self.diag_text = tk.Text(self)
         self.diag_text.pack(fill="both", expand=True)
         self.diag_status_var = tk.StringVar(value="Ready")

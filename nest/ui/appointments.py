@@ -20,9 +20,10 @@ except ImportError:
 class AppointmentsModule(ttk.Frame):
     """Google Calendar based appointments module for Nest 2.3"""
     
-    def __init__(self, parent):
+    def __init__(self, parent, app=None):
         super().__init__(parent, padding=10)
         self.parent = parent
+        self.app = app
         
         # Initialize variables
         self.calendar_client = None

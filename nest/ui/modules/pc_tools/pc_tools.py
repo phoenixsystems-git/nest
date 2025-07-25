@@ -40,16 +40,18 @@ from nest.ui.modules.pc_tools.data_recovery import DataRecoveryTab
 class PCToolsModule(ttk.Frame):
     """PC Tools module for Nest application."""
 
-    def __init__(self, parent, current_user=None):
+    def __init__(self, parent, current_user=None, app=None):
         """Initialize the PC Tools module with enhanced caching and performance tracking.
         
         Args:
             parent: Parent widget
             current_user: Dictionary containing current user information
+            app: The main application instance for NestBot integration
         """
         super().__init__(parent, padding=10)
         self.parent = parent
         self.current_user = current_user or {}
+        self.app = app
         
         # Session start time for performance tracking
         self.session_start_time = time.time()
