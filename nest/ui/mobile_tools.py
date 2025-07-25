@@ -4,9 +4,10 @@ import logging
 
 
 class MobileToolsModule(ttk.Frame):
-    def __init__(self, parent, current_user=None):
+    def __init__(self, parent, current_user=None, app=None):
         super().__init__(parent, padding=15, style="RepairDesk.TFrame")
         self.current_user = current_user
+        self.app = app
         self.colors = {
             "primary": "#017E84",
             "secondary": "#2ecc71",

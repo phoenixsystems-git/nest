@@ -25,9 +25,10 @@ IS_WINDOWS = platform.system().lower() == 'windows'
 
 
 class AndroidToolsModule(ttk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, app=None):
         super().__init__(parent)
         self.parent = parent
+        self.app = app
         self.device_connected = False
         self.device_info = {}
         self.device_serial = None  # Initialize device_serial to None

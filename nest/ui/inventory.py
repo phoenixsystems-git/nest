@@ -17,10 +17,11 @@ logger = logging.getLogger(__name__)
 class InventoryModule(ttk.Frame):
     """Inventory management module that integrates with RepairDesk API."""
     
-    def __init__(self, parent, current_user=None):
+    def __init__(self, parent, current_user=None, app=None):
         super().__init__(parent, padding=10)
         self.parent = parent
         self.current_user = current_user
+        self.app = app
         
         # Initialize API client
         self.api_client = RepairDeskAPI()
@@ -47,6 +48,8 @@ class InventoryModule(ttk.Frame):
         
         # Load inventory data
         self.load_inventory()
+        
+        self.setup_nestbot_integration()
 
     def create_widgets(self):
         """Create the UI components for the inventory module."""
@@ -250,6 +253,13 @@ class InventoryModule(ttk.Frame):
         
         # Add double-click event to view details
         self.inventory_tree.bind("<Double-1>", self.view_item_details)
+    
+    def setup_nestbot_integration(self):
+        """Connect this module's ticket selections to NestBot"""
+        if hasattr(self, 'app') and hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'inventory_tree'):
+            handler = self.app._create_nestbot_ticket_handler(self.__class__.__name__)
+            self.inventory_tree.bind('<<TreeviewSelect>>', handler)
+            logging.debug(f"NestBot integration enabled for {self.__class__.__name__}")
         
         # Configure tags for different item states
         self.inventory_tree.tag_configure('loading', background='#f5f5f5')

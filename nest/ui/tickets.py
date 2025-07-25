@@ -108,18 +108,20 @@ class TicketsModule(ttk.Frame):
         """Ensure resources are properly cleaned up."""
         self._cleanup_resources()
 
-    def __init__(self, parent, current_user=None, action=None):
+    def __init__(self, parent, current_user=None, action=None, app=None):
         """Initialize the tickets module.
 
         Args:
             parent: The parent widget
             current_user: Dictionary with current user information
             action: Action to perform ('new', 'view', etc.)
+            app: The main application instance
         """
         super().__init__(parent)
         self.parent = parent
         self.current_user = current_user
         self.action = action
+        self.app = app
 
         # Get colors from parent if available
         self.colors = getattr(
@@ -149,6 +151,8 @@ class TicketsModule(ttk.Frame):
 
         # Set up the UI based on the action
         self.setup_ui()
+        self.load_tickets()
+        
         self.setup_nestbot_integration()
 
     def setup_ui(self):
