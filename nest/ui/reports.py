@@ -40,6 +40,7 @@ class ReportsModule(ttk.Frame):
         # Accept report_type and other keyword arguments
         self.report_type = kwargs.get('report_type', None)
         self.current_user = kwargs.get('current_user', None)
+        self.app = kwargs.get('app', None)
         
         # Initialize the frame
         super().__init__(parent, padding=10)

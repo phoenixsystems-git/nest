@@ -222,9 +222,10 @@ def normalize_ticket(ticket) -> dict:
 
 
 class DashboardModule(ttk.Frame):
-    def __init__(self, parent, current_user):
+    def __init__(self, parent, current_user=None, app=None):
         # Apply padding to the frame with RepairDesk styling
         super().__init__(parent, padding=15, style="RepairDesk.TFrame")
+        self.app = app
         
         # Set up the RepairDesk theme
         self._setup_styles()
@@ -532,7 +533,7 @@ class DashboardModule(ttk.Frame):
     
     def setup_nestbot_integration(self):
         """Connect this module's ticket selections to NestBot"""
-        if hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'tree'):
+        if hasattr(self, 'app') and hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'tree'):
             handler = self.app._create_nestbot_ticket_handler(self.__class__.__name__)
             self.tree.bind('<<TreeviewSelect>>', handler)
             logging.debug(f"NestBot integration enabled for {self.__class__.__name__}")

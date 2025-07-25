@@ -53,7 +53,7 @@ class NestBotPanel:
         
         # Setup ticket database connection
         # Initialize ticket database
-        self.initialize_ticket_database()
+        self.ticket_db = self.initialize_ticket_database()
         
         # Initialize intelligent analysis engine
         try:

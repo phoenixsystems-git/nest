@@ -40,9 +40,10 @@ else:
 
 
 class IOSToolsModule(ttk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, app=None):
         super().__init__(parent)
         self.parent = parent
+        self.app = app
         self.device_connected = False
         self.device_info = {}
         self.threads = []  # Keep track of threads

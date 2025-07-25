@@ -9,9 +9,10 @@ from nest.main import FixedHeaderTreeview
 
 
 class TechniciansModule(ttk.Frame):
-    def __init__(self, parent, current_user=None):
+    def __init__(self, parent, current_user=None, app=None):
         super().__init__(parent, padding=15, style="RepairDesk.TFrame")
         self.current_user = current_user
+        self.app = app
         self.technicians = []
         self.loading = False
         
@@ -39,6 +40,7 @@ class TechniciansModule(ttk.Frame):
         self._setup_styles()
         self.create_widgets()
         self._load_technicians()
+        
         self.setup_nestbot_integration()
     
     def _setup_styles(self):
@@ -140,7 +142,7 @@ class TechniciansModule(ttk.Frame):
     
     def setup_nestbot_integration(self):
         """Connect this module's ticket selections to NestBot"""
-        if hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'tree'):
+        if hasattr(self, 'app') and hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'tree'):
             handler = self.app._create_nestbot_ticket_handler(self.__class__.__name__)
             self.tree.bind('<<TreeviewSelect>>', handler)
             logging.debug(f"NestBot integration enabled for {self.__class__.__name__}")

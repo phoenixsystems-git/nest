@@ -123,11 +123,12 @@ def fetch_customers_page(page):
 
 class CustomersModule(ttk.Frame):
     def __init__(
-        self, parent, current_user=None
+        self, parent, current_user=None, app=None
     ):  # Changed to accept current_user parameter with default None
         super().__init__(parent, padding=10)
         self.current_user = current_user  # Store the current user
         self.parent = parent
+        self.app = app
         self.customer_data = []
         self.filtered_data = []
         self._lock = threading.Lock()
@@ -140,6 +141,7 @@ class CustomersModule(ttk.Frame):
             self.refresh_tree()
         # Start background fetch
         threading.Thread(target=self._fetch_background, daemon=True).start()
+        
         self.setup_nestbot_integration()
 
     # Add a proper destroy method to safely clean up resources
@@ -279,7 +281,7 @@ class CustomersModule(ttk.Frame):
     
     def setup_nestbot_integration(self):
         """Connect this module's ticket selections to NestBot"""
-        if hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'tree'):
+        if hasattr(self, 'app') and hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'tree'):
             handler = self.app._create_nestbot_ticket_handler(self.__class__.__name__)
             self.tree.bind('<<TreeviewSelect>>', handler)
             logging.debug(f"NestBot integration enabled for {self.__class__.__name__}")

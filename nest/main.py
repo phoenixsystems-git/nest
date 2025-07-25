@@ -1801,44 +1801,47 @@ Your session was locked due to inactivity""",
             if module_name == "dashboard":
                 from nest.ui.dashboard import DashboardModule
 
-                module = DashboardModule(self.content_frame, current_user=self.current_user)
+                module = DashboardModule(self.content_frame, current_user=self.current_user, app=self)
             elif module_name == "tickets":
                 from nest.ui.tickets import TicketsModule
 
                 action = kwargs.get("action", None)
                 module = TicketsModule(
-                    self.content_frame, current_user=self.current_user, action=action
+                    self.content_frame, current_user=self.current_user, action=action, app=self
                 )
             elif module_name == "customers":
                 from nest.ui.customers import CustomersModule
 
                 # Pass current_user but don't pass action to CustomersModule
-                module = CustomersModule(self.content_frame, current_user=self.current_user)
+                module = CustomersModule(self.content_frame, current_user=self.current_user, app=self)
             elif module_name == "inventory":
                 from nest.ui.inventory import InventoryModule
 
-                module = InventoryModule(self.content_frame)
+                module = InventoryModule(self.content_frame, app=self)
             elif module_name == "appointments":
                 from nest.ui.appointments import AppointmentsModule
 
-                module = AppointmentsModule(self.content_frame)
+                module = AppointmentsModule(self.content_frame, app=self)
             elif module_name == "pc_tools":
                 from nest.ui.pc_tools import PCToolsModule
 
-                module = PCToolsModule(self.content_frame, current_user=self.current_user)
+                try:
+                    module = PCToolsModule(self.content_frame, current_user=self.current_user, app=self)
+                except TypeError:
+                    module = PCToolsModule(self.content_frame, current_user=self.current_user)
             elif module_name == "ios_tools":
                 from nest.ui.ios_tools import IOSToolsModule
 
-                module = IOSToolsModule(self.content_frame)
+                module = IOSToolsModule(self.content_frame, app=self)
             elif module_name == "android_tools":
                 from nest.ui.android_tools import AndroidToolsModule
 
-                module = AndroidToolsModule(self.content_frame)
+                module = AndroidToolsModule(self.content_frame, app=self)
             elif module_name == "reports":
                 from nest.ui.reports import ReportsModule
 
                 report_type = kwargs.get("report_type", None)
-                module = ReportsModule(self.content_frame, report_type=report_type)
+                module = ReportsModule(self.content_frame, report_type=report_type, app=self)
             else:
                 # Generic placeholder for unknown modules
                 module = self.create_placeholder_module(f"{module_name.title()} Module")
