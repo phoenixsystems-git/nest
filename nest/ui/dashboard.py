@@ -251,6 +251,8 @@ class DashboardModule(ttk.Frame):
         self.create_widgets()
         self._load_data_async()
         save_last_login()
+        
+        self.setup_nestbot_integration()
 
     def _setup_styles(self):
         """Configure the RepairDesk theme styling"""
@@ -527,6 +529,13 @@ class DashboardModule(ttk.Frame):
             pady=2  # Reduced padding
         )
         self.user_stats_label.pack(anchor="w", padx=5)
+    
+    def setup_nestbot_integration(self):
+        """Connect this module's ticket selections to NestBot"""
+        if hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'tree'):
+            handler = self.app._create_nestbot_ticket_handler(self.__class__.__name__)
+            self.tree.bind('<<TreeviewSelect>>', handler)
+            logging.debug(f"NestBot integration enabled for {self.__class__.__name__}")
 
     def status_message(self, message, message_type="info"):
         """Display a status message in the UI"""

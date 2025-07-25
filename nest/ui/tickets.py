@@ -149,6 +149,7 @@ class TicketsModule(ttk.Frame):
 
         # Set up the UI based on the action
         self.setup_ui()
+        self.setup_nestbot_integration()
 
     def setup_ui(self):
         """Set up the module UI."""
@@ -346,6 +347,13 @@ class TicketsModule(ttk.Frame):
 
         # Bind events to the table
         self.tickets_table.bind("<ButtonRelease-1>", self.on_ticket_select)
+    
+    def setup_nestbot_integration(self):
+        """Connect this module's ticket selections to NestBot"""
+        if hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'tickets_table'):
+            handler = self.app._create_nestbot_ticket_handler(self.__class__.__name__)
+            self.tickets_table.bind('<<TreeviewSelect>>', handler)
+            logging.debug(f"NestBot integration enabled for {self.__class__.__name__}")
         self.tickets_table.bind("<Double-1>", self.on_double_click)
 
         # Bottom pane - details view

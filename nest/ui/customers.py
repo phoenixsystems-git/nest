@@ -140,6 +140,7 @@ class CustomersModule(ttk.Frame):
             self.refresh_tree()
         # Start background fetch
         threading.Thread(target=self._fetch_background, daemon=True).start()
+        self.setup_nestbot_integration()
 
     # Add a proper destroy method to safely clean up resources
     def destroy(self):
@@ -275,6 +276,13 @@ class CustomersModule(ttk.Frame):
         # Status
         self.status = ttk.Label(self, text="Loading...")
         self.status.pack(anchor="w", pady=(5, 0))
+    
+    def setup_nestbot_integration(self):
+        """Connect this module's ticket selections to NestBot"""
+        if hasattr(self.app, '_create_nestbot_ticket_handler') and hasattr(self, 'tree'):
+            handler = self.app._create_nestbot_ticket_handler(self.__class__.__name__)
+            self.tree.bind('<<TreeviewSelect>>', handler)
+            logging.debug(f"NestBot integration enabled for {self.__class__.__name__}")
 
     def refresh_tree(self, data=None):
         """

@@ -87,13 +87,44 @@ def get_ai_response(user_message, selected_model=None, ticket_access=True, speci
         return "Hello! I'm NestBot. My AI services are temporarily unavailable, but I can still help you navigate the repair shop system. What would you like to do?"
     
     try:
-        # Load config first to check API keys
         try:
             from nest.utils.platform_paths import PlatformPaths
             platform_paths = PlatformPaths()
             config_path = platform_paths.get_config_dir() / 'config.json'
             with open(str(config_path), 'r') as file:
                 config = json.load(file)
+            
+            context_data = {
+                'user': current_user,
+                'ticket': specific_ticket,
+                'conversation': conversation_context,
+                'timestamp': datetime.now().isoformat(),
+                'system_info': {
+                    'platform': platform_paths.feature_detection.system,
+                    'has_ticket_access': ticket_access
+                }
+            }
+            
+            # Add ticket data if available
+            if specific_ticket and ticket_access:
+                try:
+                    ticket_data = None
+                    if hasattr(current_user, 'ticket_db') and 'get_ticket' in current_user.ticket_db:
+                        ticket_data = current_user.ticket_db['get_ticket'](specific_ticket)
+                    if ticket_data:
+                        context_data['ticket_details'] = ticket_data
+                        logging.debug(f"Added ticket {specific_ticket} context to AI request")
+                except Exception as e:
+                    logging.warning(f"Could not load ticket data for AI context: {e}")
+            
+            # Add user context knowledge if available
+            if custom_knowledge_path and os.path.exists(custom_knowledge_path):
+                try:
+                    with open(custom_knowledge_path, 'r') as f:
+                        user_knowledge = json.load(f)
+                        context_data['user_knowledge'] = user_knowledge
+                except Exception as e:
+                    logging.warning(f"Could not load user knowledge: {e}")
         except Exception as e:
             logging.error(f"Error loading configuration: {str(e)}")
             return get_fallback_response(user_message)
