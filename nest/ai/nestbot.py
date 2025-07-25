@@ -2497,13 +2497,15 @@ Need more help? Just ask!
             # Add to conversation history
             self.conversation_history.append({"role": "assistant", "content": response_text})
             
-            # Update the UI with the response
-            self.update_thinking_message(response_text)
+            logging.info(f"Scheduling UI update for AI response (length: {len(response_text)})")
+            # Update the UI with the response (thread-safe)
+            self.ai_chat_display.after(0, lambda: self.update_thinking_message(response_text))
             
         except Exception as e:
             logging.error(f"Error getting AI response: {str(e)}")
-            # Update the thinking message with the error
-            self.update_thinking_message(f"⚠️ **Error:** I encountered a problem while processing your request. {str(e)}")
+            # Update the thinking message with the error (thread-safe)
+            error_message = f"⚠️ **Error:** I encountered a problem while processing your request. {str(e)}"
+            self.ai_chat_display.after(0, lambda: self.update_thinking_message(error_message))
     
     def show_thinking_message(self):
         """Show a 'Thinking...' message in the chat interface while waiting for AI response."""
